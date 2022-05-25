@@ -1,0 +1,80 @@
+name: Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-to-dev:
+    runs-on: ubuntu-latest
+    environment:
+      name: delius-core-dev
+      url: https://ndelius.dev.probation.service.justice.gov.uk/
+    steps:
+      - name: deploy
+        # ...deployment-specific steps
+
+  deploy-to-sandpit:
+    runs-on: ubuntu-latest
+    environment:
+      name: delius-core-sandpit
+      url: https://ndelius.sandpit.probation.service.justice.gov.uk/
+    steps:
+      - name: deploy
+
+  deploy-to-mis-dev:
+    runs-on: ubuntu-latest
+    environment:
+      name: mis-dev
+      url: https://ndelius.mis-dev.probation.service.justice.gov.uk/
+    steps:
+      - name: deploy
+
+  deploy-to-test:
+    runs-on: ubuntu-latest
+    needs: [deploy-to-dev, deploy-to-sandpit, deploy-to-mis-dev]
+    environment:
+      name: test
+      url: https://ndelius.test.probation.service.justice.gov.uk/
+    steps:
+      - name: deploy
+
+  deploy-to-perf:
+    runs-on: ubuntu-latest
+    needs: [deploy-to-dev, deploy-to-sandpit, deploy-to-mis-dev]
+    environment:
+      name: test
+      url: https://ndelius.perf.probation.service.justice.gov.uk/
+    steps:
+      - name: deploy
+
+  run-serenity-tests:
+    runs-on: ubuntu-latest
+    needs: [deploy-to-test]
+    steps:
+      - name: test
+
+  run-performance-tests:
+    runs-on: ubuntu-latest
+    needs: [deploy-to-perf]
+    steps:
+      - name: test
+
+  deploy-to-pre-prod:
+    runs-on: ubuntu-latest
+    needs: [run-serenity-tests, run-performance-tests]
+    environment:
+      name: test
+      url: https://ndelius.pre-prod.delius.probation.hmpps.dsd.io/
+    steps:
+      - name: deploy
+
+  deploy-to-training:
+    runs-on: ubuntu-latest
+    needs: [run-serenity-tests, run-performance-tests]
+    environment:
+      name: test
+      url: https://ndelius.training.probation.service.justice.gov.uk/
+    steps:
+      - name: deploy
