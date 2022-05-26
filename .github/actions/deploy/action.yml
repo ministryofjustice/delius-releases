@@ -1,0 +1,33 @@
+name: Deploy
+description: Deploy a Delius version to an environment
+
+inputs:
+  version:
+    description: The version of Delius to deploy
+    required: true
+  environment:
+    description: The environment to deploy to
+    required: true
+  github_token:
+    description: The token used to commit changes to the hmpps-env-configs repository
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Update config
+      shell: bash
+      run: |
+        git config --global user.name "[bot] delius-releases"
+        git clone "https://${{ inputs.github_token }}@github.com/ministryofjustice/hmpps-env-configs.git"
+        cd hmpps-env-configs
+        sed -i "s/ndelius_version: .*/ndelius_version: \"${{ inputs.version }}\"/" "${{ inputs.environment }}/ansible/group_vars/all.yml"
+        git commit -m "Deploy Delius ${{ inputs.version }} to ${{ inputs.environment }}" \
+                   -m 'This was triggered by an automated deployment from https://github.com/ministryofjustice/delius-releases' \
+                   "${{ inputs.environment }}/ansible/group_vars/all.yml"
+#        git push TODO this is disabled for now while testing
+
+    - name: Execute automation document
+      shell: bash
+      run: |
+        echo Deploying...
