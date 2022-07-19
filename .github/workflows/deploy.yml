@@ -2,7 +2,7 @@ name: Deploy
 
 on:
   # Allow a deployment to be started from the pipeline
-  workflow_call: # Call from pipeline
+  workflow_call:
     inputs:
       version:
         description: Delius version
@@ -63,6 +63,7 @@ jobs:
           # export any variables we might need later
           HMPPS_BUILD_WORK_DIR=$GITHUB_WORKSPACE source "${{ inputs.environment }}/${{ inputs.environment }}.properties"
           echo "::set-output name=short_environment_name::$TG_SHORT_ENVIRONMENT_NAME"
+          echo "::set-output name=aws_role_arn::$(gpg --symmetric --batch --passphrase "${{ secrets.PGP_SECRET_SIGNING_PASSPHRASE }}" --output - <(echo "${{ secrets.AWS_ROLE_ARN }}") | base64 -w0)"
 
           # update the version variable and push
           sed -i "s/ndelius_version: .*/ndelius_version: \"${{ inputs.version }}\"/" "${{ inputs.environment }}/ansible/group_vars/all.yml"
@@ -122,8 +123,33 @@ jobs:
           # check the status
           test "$status" == "Success"
 
+    outputs:
+      short_environment_name: ${{ steps.config.outputs.short_environment_name }}
+      aws_role_arn: ${{ steps.config.outputs.aws_role_arn }}
+
+  smoke-test:
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    steps:
+      - name: Decrypt role arn # This is a workaround to securely pass a secret between jobs - see https://nitratine.net/blog/post/how-to-pass-secrets-between-runners-in-github-actions/
+        id: decrypt
+        run: |
+          aws_role_arn=$(gpg --decrypt --quiet --batch --passphrase "${{ secrets.PGP_SECRET_SIGNING_PASSPHRASE }}" --output - <(echo "${{ needs.deploy.outputs.aws_role_arn }}" | base64 -d))
+          echo "::add-mask::$aws_role_arn"
+          echo "::set-output name=aws_role_arn::$aws_role_arn"
+
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: eu-west-2
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ steps.decrypt.outputs.aws_role_arn }}
+          role-skip-session-tagging: true
+          role-duration-seconds: 3600
+          mask-aws-account-id: false
+
       - name: Run smoke tests
         uses: marcus-bcl/aws-codebuild-run-build@4d318a89c4d0e91ba639c9220abd258d487efcce
         with:
-          project-name: ${{ steps.config.outputs.short_environment_name }}-delius-smoke-tests-build
+          project-name: ${{ needs.deploy.outputs.short_environment_name }}-delius-smoke-tests-build
           disable-source-override: true

@@ -96,3 +96,9 @@ jobs:
       environment_url: https://ndelius.training.probation.service.justice.gov.uk/
       version: ${{ github.event.release.name }}
     secrets: inherit
+
+  complete:
+    runs-on: ubuntu-latest
+    needs: [pre-prod, training]
+    steps:
+      - run: echo Pipeline complete!
