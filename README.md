@@ -1,11 +1,11 @@
 # Delius Releases
 
-[![Deployment](https://github.com/ministryofjustice/delius-releases/actions/workflows/deployment.yml/badge.svg)](https://github.com/ministryofjustice/delius-releases/actions/workflows/deployment.yml)
+[![Status](https://github.com/ministryofjustice/delius-releases/actions/workflows/pipeline.yml/badge.svg)](https://github.com/ministryofjustice/delius-releases/actions/workflows/pipeline.yml)
 
 Automated deployment pipeline for the National Delius probation case management system, built by Unilink to improve the speed and quality of releases.
 This repository also acts as a central place to store and access the [release notes](release-notes).
 
-* **[View the latest releases and deployments here](https://github.com/ministryofjustice/delius-releases/actions/workflows/deployment.yml)**
+* **[View the latest releases and deployments here](https://github.com/ministryofjustice/delius-releases/actions/workflows/pipeline.yml)**
 
 > :memo: This project is a work-in-progress and subject to change.
 

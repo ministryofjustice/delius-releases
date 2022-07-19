@@ -1,0 +1,129 @@
+name: Deploy
+
+on:
+  # Allow a deployment to be started from the pipeline
+  workflow_call: # Call from pipeline
+    inputs:
+      version:
+        description: Delius version
+        type: string
+        required: true
+      environment:
+        description: Environment
+        type: string
+        required: true
+      environment_url:
+        description: URL
+        type: string
+        required: false
+        default: ''
+  # Allow a deployment to be started from the UI
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Delius version
+        type: string
+        required: true
+      environment:
+        description: Environment
+        type: environment
+        required: true
+      environment_url:
+        description: Environment URL (optional)
+        type: string
+        required: false
+        default: ''
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ inputs.environment_url }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: eu-west-2
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-skip-session-tagging: true
+          role-duration-seconds: 3600
+          mask-aws-account-id: false
+
+      - name: Update configuration
+        id: config
+        shell: bash
+        run: |
+          # clone the configuration repo
+          git config --global user.name "[bot] delius-releases"
+          git clone "https://${{ secrets.EXT_GITHUB_TOKEN }}@github.com/ministryofjustice/hmpps-env-configs.git" env_configs
+          cd env_configs
+
+          # export any variables we might need later
+          HMPPS_BUILD_WORK_DIR=$GITHUB_WORKSPACE source "${{ inputs.environment }}/${{ inputs.environment }}.properties"
+          echo "::set-output name=short_environment_name::$TG_SHORT_ENVIRONMENT_NAME"
+
+          # update the version variable and push
+          sed -i "s/ndelius_version: .*/ndelius_version: \"${{ inputs.version }}\"/" "${{ inputs.environment }}/ansible/group_vars/all.yml"
+          git update-index -q --refresh
+          if git diff-index --quiet HEAD --; then
+            echo "No changes, re-deploying ${{ inputs.version }}"
+          else
+            git commit -m "Deploy Delius ${{ inputs.version }} to ${{ inputs.environment }}" \
+                       -m 'This was triggered by an automated deployment from https://github.com/ministryofjustice/delius-releases' \
+                       "${{ inputs.environment }}/ansible/group_vars/all.yml"
+            git push
+          fi
+
+      - name: Start automation
+        shell: bash
+        id: start_automation
+        run: |
+          # start the execution
+          execution=$(aws ssm start-automation-execution --document-name "${{ steps.config.outputs.short_environment_name }}-Delius-DeployApplication" --region eu-west-2)
+          execution_id=$(echo "$execution" | jq -r '.AutomationExecutionId')
+          echo "::set-output name=execution_id::$execution_id"
+
+          # output useful links
+          echo "Execution started. Check the status in AWS Systems Manager: https://eu-west-2.console.aws.amazon.com/systems-manager/automation/execution/${execution_id}?region=eu-west-2"
+          while [ -z "$codebuild_link" ]; do codebuild_link=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query "AutomationExecution.StepExecutions[?StepName == 'OutputBuildDetails'].Outputs.CodeBuildLink[]" --output text); sleep 1; done
+          echo "View the logs in AWS CodeBuild: $codebuild_link"
+
+      - name: Wait for automation to complete
+        shell: bash
+        run: |
+          execution_id=${{ steps.start_automation.outputs.execution_id }}
+
+          # output useful links
+          echo "Execution started. Check the status in AWS Systems Manager: https://eu-west-2.console.aws.amazon.com/systems-manager/automation/execution/${execution_id}?region=eu-west-2"
+          while [ -z "$codebuild_link" ]; do codebuild_link=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query "AutomationExecution.StepExecutions[?StepName == 'OutputBuildDetails'].Outputs.CodeBuildLink[]" --output text); sleep 1; done
+          echo "View the logs in AWS CodeBuild: $codebuild_link"
+
+          # wait for the execution to complete
+          status="Started"
+          start_time=$SECONDS
+          while [ "$status" != "Success" -a "$status" != "Failed" -a "$status" != "TimedOut" -a "$status" != "Cancelled" ]; do
+            status=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query 'AutomationExecution.AutomationExecutionStatus' --output text)
+            sleep 1
+          done
+
+          # output the summary
+          echo Execution completed. Status: $status
+          duration=$(( SECONDS - start_time ))
+          status_icon=$(test "$status" == "Success" && echo ':white_check_mark:' || echo ':x:')
+          echo '### Deployment Complete' >> $GITHUB_STEP_SUMMARY
+          echo '| Environment | ${{ inputs.environment }} |' >> $GITHUB_STEP_SUMMARY
+          echo '| :--- | :--- |' >> $GITHUB_STEP_SUMMARY
+          echo "| Status | $status_icon $status |" >> $GITHUB_STEP_SUMMARY
+          echo "| Duration | :stopwatch: $((duration/60))m $((duration%60))s |" >> $GITHUB_STEP_SUMMARY
+          echo "| Logs | :memo: [View the logs in AWS CodeBuild]($codebuild_link) |" >> $GITHUB_STEP_SUMMARY
+
+          # check the status
+          test "$status" == "Success"
+
+      - name: Run smoke tests
+        uses: marcus-bcl/aws-codebuild-run-build@4d318a89c4d0e91ba639c9220abd258d487efcce
+        with:
+          project-name: ${{ steps.config.outputs.short_environment_name }}-delius-smoke-tests-build
+          disable-source-override: true
