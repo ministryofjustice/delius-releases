@@ -7,9 +7,11 @@ jobs:
   generate-release-note:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install dependencies
-        run: brew install pdftohtml pandoc
+        run: |
+          sudo apt install pdftohtml
+          brew install pandoc
       - name: PDF to HTML
         run: pdftohtml -enc UTF-8 -noframes 'release-notes/Delius Service Team ND 5.4.13.1 Release Notes.pdf' release_notes.html
       - name: HTML to Markdown
