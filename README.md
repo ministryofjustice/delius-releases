@@ -27,7 +27,7 @@ Then, the pipeline will automatically:
    
    Note: deployment to production will be manually scheduled and performed out of hours.
 
-Any deployment failures will trigger an alert to the NDST Slack channel.
+Any deployment failures will trigger an alert to Slack.
 
 ## Approvals
 Deployment to the development environments is automatic, however other environments are subject to manual approval.
@@ -52,4 +52,4 @@ Example:
 <p align="center"><a href=".docs/slack.png"><img src=".docs/slack.png" width="600" alt="Slack notification example"/></a></p>
 
 ## Support
-If you have any questions feel free to get in touch via Slack: ([#TODO pick a slack channel](TODO)), or create a [GitHub issue](https://github.com/ministryofjustice/delius-releases/issues/new) in this repository.
+If you have any questions feel free to get in touch via Slack: ([#ndelius_service_team](https://mojdt.slack.com/archives/C6C1KGRME)), or create a [GitHub issue](https://github.com/ministryofjustice/delius-releases/issues/new) in this repository.

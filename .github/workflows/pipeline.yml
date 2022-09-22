@@ -14,13 +14,13 @@ jobs:
       version: ${{ github.event.release.name }}
     secrets: inherit
 
-#  delius-mis-dev: # TODO awaiting confirmation we can auto-deploy to delius-mis-dev
-#    uses: ./.github/workflows/deploy.yml
-#    with:
-#      environment: delius-mis-dev
-#      environment_url: https://ndelius.mis-dev.probation.service.justice.gov.uk/
-#      version: ${{ github.event.release.name }}
-#    secrets: inherit
+  delius-mis-dev:
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: delius-mis-dev
+      environment_url: https://ndelius.mis-dev.probation.service.justice.gov.uk/
+      version: ${{ github.event.release.name }}
+    secrets: inherit
 
   test:
     uses: ./.github/workflows/deploy.yml
@@ -31,7 +31,7 @@ jobs:
       version: ${{ github.event.release.name }}
     secrets: inherit
 
-  serenity-tests: # TODO need to move the serenity tests into the delius-pipelines framework for this to work
+  serenity-tests:
     runs-on: ubuntu-latest
     needs: [test]
     steps:
@@ -60,6 +60,7 @@ jobs:
     secrets: inherit
 
   performance-tests:
+    if: false # Disabled until NDST/Version1 are happy to run the performance tests as part of the pipeline
     runs-on: ubuntu-latest
     needs: [stage]
     steps:
@@ -75,13 +76,16 @@ jobs:
         with:
           project-name: del-stage-delius-performance-tests-build
           disable-source-override: true
-          env-vars-for-codbuild: CONCURRENT_USERS
+          env-vars-for-codebuild: CONCURRENT_USERS,DURATION
         env:
           CONCURRENT_USERS: 160
+          DURATION: 3600 # 1 hour
 
   pre-prod:
     uses: ./.github/workflows/deploy.yml
-    needs: [serenity-tests, performance-tests]
+    needs:
+      - serenity-tests
+#      - performance-tests
     with:
       environment: delius-pre-prod
       environment_url: https://ndelius.pre-prod.delius.probation.hmpps.dsd.io/
@@ -90,7 +94,9 @@ jobs:
 
   training:
     uses: ./.github/workflows/deploy.yml
-    needs: [serenity-tests, performance-tests]
+    needs:
+      - serenity-tests
+#      - performance-tests
     with:
       environment: delius-training
       environment_url: https://ndelius.training.probation.service.justice.gov.uk/
