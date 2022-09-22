@@ -16,3 +16,5 @@ jobs:
         run: pandoc --ascii --from html --to markdown release_notes.html | tail -n+3 > release_notes.md
       - name: Update GitHub release
         run: gh release edit v5.4.13.1 --notes-file release_notes.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
