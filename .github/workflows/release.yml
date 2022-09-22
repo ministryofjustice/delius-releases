@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    paths:
+      - 'release-notes/**/*.pdf'
+
+env:
+  version: ${{ github.event.head_commit.message }}
+  filename: Delius Service Team ND ${{ github.event.head_commit.message }} Release Notes.pdf
+
+jobs:
+  generate-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt install pdftohtml
+          brew install pandoc
+
+      - name: PDF to HTML
+        run: pdftohtml -enc UTF-8 -noframes -nomerge 'release-notes/${{ env.filename }}' release_notes.html
+
+      - name: HTML to Markdown
+        run: pandoc --ascii --from html --to markdown release_notes.html > release_notes.raw.md
+
+      - name: Tidy up formatting
+        run: |
+          cat release_notes.raw.md \
+          | tail -n+5 \
+          | sed '/^Page/d' \
+          | sed '/^---/d' \
+          | sed 's/\\]&nbsp;\*\*/\]** /' \
+          | awk '/^\*\*/{if (x)print x;x="";}{x=(!x)?$0:x" "$0;}END{print x;}' \
+          | sed 's/\\ $//' > release_notes.md
+          cat release_notes.md
+
+      - name: Create GitHub release
+        run: gh release create 'v${{ env.version }}' --title '${{ env.version }}' --notes-file release_notes.md
+        env:
+          GH_TOKEN: ${{ secrets.EXT_GITHUB_TOKEN }}
