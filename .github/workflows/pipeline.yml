@@ -46,6 +46,7 @@ jobs:
           mask-aws-account-id: false
       - name: Run tests
         uses: marcus-bcl/aws-codebuild-run-build@4d318a89c4d0e91ba639c9220abd258d487efcce
+        continue-on-error: true
         with:
           project-name: del-test-delius-serenity-tests-build
           disable-source-override: true
