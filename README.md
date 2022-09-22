@@ -7,8 +7,6 @@ This repository also acts as a central place to store and access the [release no
 
 * **[View the latest releases and deployments here](https://github.com/ministryofjustice/delius-releases/actions/workflows/pipeline.yml)**
 
-> :memo: This project is a work-in-progress and subject to change.
-
 ## Pipeline
 
 ![Pipeline](.docs/pipeline.png)
@@ -38,6 +36,20 @@ Each approver will receive an email whenever a deployment is pending, with a lin
 Example:
 
 <p align="center"><a href=".docs/approval.gif"><img src=".docs/approval.gif" width="600" alt="Approval example"/></a></p>
+
+## Release Notes
+Unilink publishes a new release note each week.  They can be found in the [release-notes](release-notes) directory.
+
+To publish a new release note (using v1.2.3 as an example):
+1. Upload the PDF file to the [release-notes](release-notes) directory.
+   >The file name should be "Delius Service Team ND 1.2.3 Release Notes.pdf"
+   and the commit message should be "NDelius 1.2.3".
+2. [Create a new release](https://github.com/ministryofjustice/delius-releases/releases/new) in GitHub
+   >Enter "v1.2.3" for the tag (notice the "v" prefix), and "1.2.3" for the release title.
+
+Example:
+
+<p align="center"><a href=".docs/publish-release.gif"><img src=".docs/publish-release.gif" width="600" alt="Publishing a release"/></a></p>
 
 ## Slack Integration
 To enable notifications for releases, approvals and deployments, type the following in the desired Slack channel:
