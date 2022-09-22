@@ -13,8 +13,8 @@ jobs:
       - name: PDF to HTML
         run: pdftohtml -enc UTF-8 -noframes 'release-notes/Delius Service Team ND 5.4.13.1 Release Notes.pdf' release_notes.html
       - name: HTML to Markdown
-        run: pandoc --ascii --from html --to markdown release_notes.html | tail -n+3 > release_notes.md
+        run: pandoc --ascii --from html --to markdown release_notes.html | tail -n+5 | sed -E 's/^\*\*/\n\*\*/' | sed -E 's/(.*)\\/\1/' > release_notes.md
       - name: Update GitHub release
-        run: gh release edit v5.4.13.1 --notes-file release_notes.md
+        run: gh release edit 'v5.4.13.1' --notes-file release_notes.md
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
