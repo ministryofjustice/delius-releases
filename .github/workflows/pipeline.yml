@@ -23,7 +23,8 @@ jobs:
           | sed '/^Page/d' \
           | sed '/^---/d' \
           | sed 's/\\]&nbsp;\*\*/\]** /' \
-          | awk '/^\*\*/{if (x)print x;x="";}{x=(!x)?$0:x" "$0;}END{print x;}' > release_notes.md
+          | awk '/^\*\*/{if (x)print x;x="";}{x=(!x)?$0:x" "$0;}END{print x;}' \
+          | sed 's/\\ $//' > release_notes.md
           cat release_notes.md
       - name: Update GitHub release
         run: gh release edit 'v5.4.13.1' --notes-file release_notes.md
