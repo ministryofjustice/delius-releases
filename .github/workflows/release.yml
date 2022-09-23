@@ -20,8 +20,12 @@ jobs:
           sudo apt install pdftohtml
           brew install pandoc
 
+      - name: Get release note
+        id: pdf
+        run: echo "::set-output name=filename::$(find release-notes -name '${{ env.filename }}')"
+
       - name: PDF to HTML
-        run: pdftohtml -enc UTF-8 -noframes -nomerge 'release-notes/${{ env.filename }}' release_notes.html
+        run: pdftohtml -enc UTF-8 -noframes -nomerge '${{ steps.pdf.outputs.filename }}' release_notes.html
 
       - name: HTML to Markdown
         run: pandoc --ascii --from html --to markdown release_notes.html > release_notes.raw.md
