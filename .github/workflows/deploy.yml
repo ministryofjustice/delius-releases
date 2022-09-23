@@ -41,106 +41,107 @@ jobs:
       name: ${{ inputs.environment }}
       url: ${{ inputs.environment_url }}
     steps:
-      - uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-region: eu-west-2
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          role-skip-session-tagging: true
-          role-duration-seconds: 3600
-          mask-aws-account-id: false
-
-      - name: Update configuration
-        id: config
-        shell: bash
-        run: |
-          # clone the configuration repo
-          git config --global user.name "[bot] delius-releases"
-          git clone "https://${{ secrets.EXT_GITHUB_TOKEN }}@github.com/ministryofjustice/hmpps-env-configs.git" env_configs
-          cd env_configs
-
-          # export any variables for later
-          HMPPS_BUILD_WORK_DIR=$GITHUB_WORKSPACE source "${{ inputs.environment }}/${{ inputs.environment }}.properties"
-          echo "::set-output name=short_environment_name::$TG_SHORT_ENVIRONMENT_NAME"
-          current_version=$(sed -En 's/^ndelius_version:\s+"(.+?)"$/\1/p' '${{ inputs.environment }}/ansible/group_vars/all.yml')
-          version_changed=$(if [ "$current_version" == "${{ inputs.version }}" ]; then echo false; else echo true; fi)
-          echo "::set-output name=current_version::$current_version"
-          echo "::set-output name=version_changed::$version_changed"
-
-          # update the version in config
-          if [ "$version_changed" == "false" ]; then
-            echo "No changes. ${{ inputs.version }} == $current_version"
-          else
-            sed -i 's/^ndelius_version:.*/ndelius_version: "${{ inputs.version }}"/' '${{ inputs.environment }}/ansible/group_vars/all.yml'
-            git commit -m "Deploy Delius v${{ inputs.version }} to ${{ inputs.environment }}" \
-                       -m 'This was triggered by an automated deployment from https://github.com/ministryofjustice/delius-releases' \
-                       "${{ inputs.environment }}/ansible/group_vars/all.yml"
-            git push
-          fi
-
-      - name: Start automation
-        id: start_automation
-        if: steps.config.outputs.version_changed == 'true' || github.event_name == 'workflow_dispatch' # only deploy if version changed, or if started manually
-        shell: bash
-        run: |
-          # start the execution
-          execution=$(aws ssm start-automation-execution --document-name "${{ steps.config.outputs.short_environment_name }}-Delius-DeployApplication" --region eu-west-2)
-          execution_id=$(echo "$execution" | jq -r '.AutomationExecutionId')
-          echo "::set-output name=execution_id::$execution_id"
-
-          # output useful links
-          echo "Execution started. Check the status in AWS Systems Manager: https://eu-west-2.console.aws.amazon.com/systems-manager/automation/execution/${execution_id}?region=eu-west-2"
-          while [ -z "$codebuild_link" ]; do codebuild_link=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query "AutomationExecution.StepExecutions[?StepName == 'OutputBuildDetails'].Outputs.CodeBuildLink[]" --output text); sleep 1; done
-          echo "View the logs in AWS CodeBuild: $codebuild_link"
-
-      - name: Wait for automation to complete
-        id: wait_for_automation
-        if: steps.config.outputs.version_changed == 'true' || github.event_name == 'workflow_dispatch' # only deploy if version changed, or if started manually
-        shell: bash
-        run: |
-          execution_id=${{ steps.start_automation.outputs.execution_id }}
-
-          # output useful links
-          echo "Execution started. Check the status in AWS Systems Manager: https://eu-west-2.console.aws.amazon.com/systems-manager/automation/execution/${execution_id}?region=eu-west-2"
-          while [ -z "$codebuild_link" ]; do codebuild_link=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query "AutomationExecution.StepExecutions[?StepName == 'OutputBuildDetails'].Outputs.CodeBuildLink[]" --output text); sleep 1; done
-          echo "View the logs in AWS CodeBuild: $codebuild_link"
-
-          # wait for the execution to complete
-          status="Started"
-          start_time=$SECONDS
-          while [ "$status" != "Success" -a "$status" != "Failed" -a "$status" != "TimedOut" -a "$status" != "Cancelled" ]; do
-            status=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query 'AutomationExecution.AutomationExecutionStatus' --output text)
-            sleep 1
-          done
-
-          # output the summary
-          echo Execution completed. Status: $status
-          duration=$(( SECONDS - start_time ))
-          status_icon=$(test "$status" == "Success" && echo ':white_check_mark:' || echo ':x:')
-          echo '### Deployment Complete' >> $GITHUB_STEP_SUMMARY
-          echo '| Environment | ${{ inputs.environment }} |' >> $GITHUB_STEP_SUMMARY
-          echo '| :--- | :--- |' >> $GITHUB_STEP_SUMMARY
-          echo "| Status | $status_icon $status |" >> $GITHUB_STEP_SUMMARY
-          echo "| Duration | :stopwatch: $((duration/60))m $((duration%60))s |" >> $GITHUB_STEP_SUMMARY
-          echo "| Logs | :memo: [View the logs in AWS CodeBuild]($codebuild_link) |" >> $GITHUB_STEP_SUMMARY
-
-          # check the status
-          test "$status" == "Success"
-
-      - name: Revert version on failure
-        if: always() && steps.config.outputs.version_changed == 'true' && (steps.start_automation.outcome == 'failure' || steps.wait_for_automation.outcome == 'failure')
-        working-directory: env_configs
-        shell: bash
-        run: |
-          sed -i 's/^ndelius_version:.*/ndelius_version: "${{ steps.config.outputs.current_version }}"/' '${{ inputs.environment }}/ansible/group_vars/all.yml'
-          git commit -m "Rollback Delius v${{ inputs.version }} in ${{ inputs.environment }}" \
-                     -m 'This was triggered by an automated deployment from https://github.com/ministryofjustice/delius-releases' \
-                     "${{ inputs.environment }}/ansible/group_vars/all.yml"
-          git push
-
-      - name: Run smoke tests
-        uses: marcus-bcl/aws-codebuild-run-build@4d318a89c4d0e91ba639c9220abd258d487efcce
-        with:
-          project-name: ${{ steps.config.outputs.short_environment_name }}-delius-smoke-tests-build
-          disable-source-override: true
+      - run: echo Deploying ${{ inputs.version }} to {{ inputs.environment }}
+#      - uses: aws-actions/configure-aws-credentials@v1
+#        with:
+#          aws-region: eu-west-2
+#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+#          role-skip-session-tagging: true
+#          role-duration-seconds: 3600
+#          mask-aws-account-id: false
+#
+#      - name: Update configuration
+#        id: config
+#        shell: bash
+#        run: |
+#          # clone the configuration repo
+#          git config --global user.name "[bot] delius-releases"
+#          git clone "https://${{ secrets.EXT_GITHUB_TOKEN }}@github.com/ministryofjustice/hmpps-env-configs.git" env_configs
+#          cd env_configs
+#
+#          # export any variables for later
+#          HMPPS_BUILD_WORK_DIR=$GITHUB_WORKSPACE source "${{ inputs.environment }}/${{ inputs.environment }}.properties"
+#          echo "::set-output name=short_environment_name::$TG_SHORT_ENVIRONMENT_NAME"
+#          current_version=$(sed -En 's/^ndelius_version:\s+"(.+?)"$/\1/p' '${{ inputs.environment }}/ansible/group_vars/all.yml')
+#          version_changed=$(if [ "$current_version" == "${{ inputs.version }}" ]; then echo false; else echo true; fi)
+#          echo "::set-output name=current_version::$current_version"
+#          echo "::set-output name=version_changed::$version_changed"
+#
+#          # update the version in config
+#          if [ "$version_changed" == "false" ]; then
+#            echo "No changes. ${{ inputs.version }} == $current_version"
+#          else
+#            sed -i 's/^ndelius_version:.*/ndelius_version: "${{ inputs.version }}"/' '${{ inputs.environment }}/ansible/group_vars/all.yml'
+#            git commit -m "Deploy Delius v${{ inputs.version }} to ${{ inputs.environment }}" \
+#                       -m 'This was triggered by an automated deployment from https://github.com/ministryofjustice/delius-releases' \
+#                       "${{ inputs.environment }}/ansible/group_vars/all.yml"
+#            git push
+#          fi
+#
+#      - name: Start automation
+#        id: start_automation
+#        if: steps.config.outputs.version_changed == 'true' || github.event_name == 'workflow_dispatch' # only deploy if version changed, or if started manually
+#        shell: bash
+#        run: |
+#          # start the execution
+#          execution=$(aws ssm start-automation-execution --document-name "${{ steps.config.outputs.short_environment_name }}-Delius-DeployApplication" --region eu-west-2)
+#          execution_id=$(echo "$execution" | jq -r '.AutomationExecutionId')
+#          echo "::set-output name=execution_id::$execution_id"
+#
+#          # output useful links
+#          echo "Execution started. Check the status in AWS Systems Manager: https://eu-west-2.console.aws.amazon.com/systems-manager/automation/execution/${execution_id}?region=eu-west-2"
+#          while [ -z "$codebuild_link" ]; do codebuild_link=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query "AutomationExecution.StepExecutions[?StepName == 'OutputBuildDetails'].Outputs.CodeBuildLink[]" --output text); sleep 1; done
+#          echo "View the logs in AWS CodeBuild: $codebuild_link"
+#
+#      - name: Wait for automation to complete
+#        id: wait_for_automation
+#        if: steps.config.outputs.version_changed == 'true' || github.event_name == 'workflow_dispatch' # only deploy if version changed, or if started manually
+#        shell: bash
+#        run: |
+#          execution_id=${{ steps.start_automation.outputs.execution_id }}
+#
+#          # output useful links
+#          echo "Execution started. Check the status in AWS Systems Manager: https://eu-west-2.console.aws.amazon.com/systems-manager/automation/execution/${execution_id}?region=eu-west-2"
+#          while [ -z "$codebuild_link" ]; do codebuild_link=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query "AutomationExecution.StepExecutions[?StepName == 'OutputBuildDetails'].Outputs.CodeBuildLink[]" --output text); sleep 1; done
+#          echo "View the logs in AWS CodeBuild: $codebuild_link"
+#
+#          # wait for the execution to complete
+#          status="Started"
+#          start_time=$SECONDS
+#          while [ "$status" != "Success" -a "$status" != "Failed" -a "$status" != "TimedOut" -a "$status" != "Cancelled" ]; do
+#            status=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query 'AutomationExecution.AutomationExecutionStatus' --output text)
+#            sleep 1
+#          done
+#
+#          # output the summary
+#          echo Execution completed. Status: $status
+#          duration=$(( SECONDS - start_time ))
+#          status_icon=$(test "$status" == "Success" && echo ':white_check_mark:' || echo ':x:')
+#          echo '### Deployment Complete' >> $GITHUB_STEP_SUMMARY
+#          echo '| Environment | ${{ inputs.environment }} |' >> $GITHUB_STEP_SUMMARY
+#          echo '| :--- | :--- |' >> $GITHUB_STEP_SUMMARY
+#          echo "| Status | $status_icon $status |" >> $GITHUB_STEP_SUMMARY
+#          echo "| Duration | :stopwatch: $((duration/60))m $((duration%60))s |" >> $GITHUB_STEP_SUMMARY
+#          echo "| Logs | :memo: [View the logs in AWS CodeBuild]($codebuild_link) |" >> $GITHUB_STEP_SUMMARY
+#
+#          # check the status
+#          test "$status" == "Success"
+#
+#      - name: Revert version on failure
+#        if: always() && steps.config.outputs.version_changed == 'true' && (steps.start_automation.outcome == 'failure' || steps.wait_for_automation.outcome == 'failure')
+#        working-directory: env_configs
+#        shell: bash
+#        run: |
+#          sed -i 's/^ndelius_version:.*/ndelius_version: "${{ steps.config.outputs.current_version }}"/' '${{ inputs.environment }}/ansible/group_vars/all.yml'
+#          git commit -m "Rollback Delius v${{ inputs.version }} in ${{ inputs.environment }}" \
+#                     -m 'This was triggered by an automated deployment from https://github.com/ministryofjustice/delius-releases' \
+#                     "${{ inputs.environment }}/ansible/group_vars/all.yml"
+#          git push
+#
+#      - name: Run smoke tests
+#        uses: marcus-bcl/aws-codebuild-run-build@4d318a89c4d0e91ba639c9220abd258d487efcce
+#        with:
+#          project-name: ${{ steps.config.outputs.short_environment_name }}-delius-smoke-tests-build
+#          disable-source-override: true
