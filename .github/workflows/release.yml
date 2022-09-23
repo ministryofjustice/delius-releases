@@ -5,6 +5,9 @@ on:
     paths:
       - 'release-notes/**/*.pdf'
 
+permissions:
+  contents: write
+
 env:
   version: ${{ github.event.head_commit.message }}
   filename: Delius Service Team ND ${{ github.event.head_commit.message }} Release Notes.pdf
@@ -42,6 +45,9 @@ jobs:
           cat release_notes.md
 
       - name: Create GitHub release
-        run: gh release create 'v${{ env.version }}' --title '${{ env.version }}' --notes-file release_notes.md
-        env:
-          GH_TOKEN: ${{ secrets.EXT_GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: release_notes.md
+          files: ${{ steps.pdf.outputs.filename }}
+          name: ${{ env.version }}
+          tag_name: v${{ env.version }}
