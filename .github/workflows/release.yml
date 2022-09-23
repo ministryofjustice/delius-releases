@@ -51,3 +51,4 @@ jobs:
           files: ${{ steps.pdf.outputs.filename }}
           name: ${{ env.version }}
           tag_name: v${{ env.version }}
+          token: ${{ secrets.EXT_GITHUB_TOKEN }}
