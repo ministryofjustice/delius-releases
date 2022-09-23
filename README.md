@@ -3,11 +3,12 @@
 [![Status](https://github.com/ministryofjustice/delius-releases/actions/workflows/pipeline.yml/badge.svg)](https://github.com/ministryofjustice/delius-releases/actions/workflows/pipeline.yml)
 
 Automated deployment pipeline for the National Delius probation case management system, built by Unilink to improve the speed and quality of releases.
-This repository also acts as a central place to store and access the [release notes](release-notes).
+This repository also acts as a central place to store and access the release notes.
 
-* **[View the latest releases and deployments here](https://github.com/ministryofjustice/delius-releases/actions/workflows/pipeline.yml)**
+* **[:memo: View the release notes](https://github.com/ministryofjustice/delius-releases/releases)**
+* **[:rocket: View the latest deployments](https://github.com/ministryofjustice/delius-releases/actions/workflows/pipeline.yml)**
 
-> :memo: This project is a work-in-progress and subject to change.
+---
 
 ## Pipeline
 
@@ -15,12 +16,13 @@ This repository also acts as a central place to store and access the [release no
 
 To trigger the pipeline:
 1. Unilink build Delius and verify it in their system test environments
-2. Unilink release Delius by uploading and tagging the release note in this repository
+2. Unilink release Delius by [uploading the release note](https://github.com/ministryofjustice/delius-releases/upload/main/release-notes/SR27) to this repository
+   > Note: the commit message must match the release version
 
-Then, the pipeline will automatically:
+Then, the pipeline will:
 
 3. Deploy to the MOJ development environments
-4. Notify environment owners via Slack/email, then wait for approval
+4. Notify test environment owners via Slack/email, then wait for approval
 5. Deploy to the MOJ test environments
 6. Run the Delius functional and performance tests against the release
 7. Deploy to the MOJ pre-production environments
