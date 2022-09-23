@@ -46,8 +46,8 @@ jobs:
         with:
           body_path: release_notes.md
           files: ${{ steps.pdf.outputs.filename }}
-          name: ${{ env.version }}
-          tag_name: v${{ env.version }}
+          name: ${{ github.event.head_commit.message }}
+          tag_name: v${{ github.event.head_commit.message }}
 
   delius-core-dev:
     uses: ./.github/workflows/deploy.yml
@@ -55,7 +55,7 @@ jobs:
     with:
       environment: delius-core-dev
       environment_url: https://ndelius.dev.probation.service.justice.gov.uk/
-      version: ${{ env.version }}
+      version: ${{ github.event.head_commit.message }}
     secrets: inherit
 
   delius-mis-dev:
@@ -64,7 +64,7 @@ jobs:
     with:
       environment: delius-mis-dev
       environment_url: https://ndelius.mis-dev.probation.service.justice.gov.uk/
-      version: ${{ env.version }}
+      version: ${{ github.event.head_commit.message }}
     secrets: inherit
 
   test:
@@ -73,7 +73,7 @@ jobs:
     with:
       environment: delius-test
       environment_url: https://ndelius.test.probation.service.justice.gov.uk/
-      version: ${{ env.version }}
+      version: ${{ github.event.head_commit.message }}
     secrets: inherit
 
   serenity-tests:
@@ -103,7 +103,7 @@ jobs:
     with:
       environment: delius-stage
       environment_url: https://ndelius.stage.probation.service.justice.gov.uk/
-      version: ${{ env.version }}
+      version: ${{ github.event.head_commit.message }}
     secrets: inherit
 
   performance-tests:
@@ -137,7 +137,7 @@ jobs:
     with:
       environment: delius-pre-prod
       environment_url: https://ndelius.pre-prod.delius.probation.hmpps.dsd.io/
-      version: ${{ env.version }}
+      version: ${{ github.event.head_commit.message }}
     secrets: inherit
 
   training:
@@ -148,7 +148,7 @@ jobs:
     with:
       environment: delius-training
       environment_url: https://ndelius.training.probation.service.justice.gov.uk/
-      version: ${{ env.version }}
+      version: ${{ github.event.head_commit.message }}
     secrets: inherit
 
   complete:
