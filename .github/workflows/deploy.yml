@@ -76,7 +76,8 @@ jobs:
             git commit -m "Deploy Delius v${{ inputs.version }} to ${{ inputs.environment }}" \
                        -m 'This was triggered by an automated deployment from https://github.com/ministryofjustice/delius-releases' \
                        "${{ inputs.environment }}/ansible/group_vars/all.yml"
-            git push
+            git pull --rebase &&
+            git push --set-upstream origin main
           fi
 
       - name: Start automation
