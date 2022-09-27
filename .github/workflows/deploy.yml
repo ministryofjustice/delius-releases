@@ -73,11 +73,12 @@ jobs:
             echo "No changes. ${{ inputs.version }} == $current_version"
           else
             sed -i 's/^ndelius_version:.*/ndelius_version: "${{ inputs.version }}"/' '${{ inputs.environment }}/ansible/group_vars/all.yml'
+            git add "${{ inputs.environment }}/ansible/group_vars/all.yml"
             git commit -m "Deploy Delius v${{ inputs.version }} to ${{ inputs.environment }}" \
                        -m 'This was triggered by an automated deployment from https://github.com/ministryofjustice/delius-releases' \
                        "${{ inputs.environment }}/ansible/group_vars/all.yml"
             git pull --rebase &&
-            git push --set-upstream origin main
+            git push --set-upstream origin master
           fi
 
       - name: Start automation
