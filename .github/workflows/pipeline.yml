@@ -2,8 +2,8 @@ name: Pipeline
 
 on:
   push:
-    paths:
-      - 'release-notes/**/*.pdf'
+    # paths:
+    #   - 'release-notes/**/*.pdf'
 
 env:
   version: ${{ github.event.head_commit.message }}
