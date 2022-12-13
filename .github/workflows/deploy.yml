@@ -83,7 +83,7 @@ jobs:
             sed -i 's/^ndelius_version:.*/ndelius_version: "${{ inputs.version }}"/' '${{ inputs.environment }}/ansible/group_vars/all.yml'
             
             # update rbac version if specified
-            if [ "${{ inputs.rbac_version }}" != ""]; then
+            if [ "${{ inputs.rbac_version }}" != "" ]; then
               if [ "$(grep -c "rbac_version:" ${{ inputs.environment }}/ansible/group_vars/ldap.yml)" -ge 1 ]; then
                 sed -i 's/^rbac_version:.*/rbac_version: "${{ inputs.rbac_version }}"/' '${{ inputs.environment }}/ansible/group_vars/ldap.yml'
               else
@@ -96,7 +96,7 @@ jobs:
             git add "${{ inputs.environment }}/ansible/group_vars/all.yml"
             git add "${{ inputs.environment }}/ansible/group_vars/ldap.yml"
             git commit -m "Deploy Delius v${{ inputs.version }} to ${{ inputs.environment }}" \
-                       -m 'This was triggered by an automated deployment from https://github.com/ministryofjustice/delius-releases' \
+                       -m 'This was triggered by an automated deployment from https://github.com/ministryofjustice/delius-releases'
             git pull --rebase &&
             git push --set-upstream origin master
           fi
