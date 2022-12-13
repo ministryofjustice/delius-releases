@@ -12,6 +12,8 @@ env:
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      rbac_version: ${{ steps.get_rbac_version.outputs.rbac_version }}
     steps:
       - uses: actions/checkout@v3
 
@@ -41,6 +43,10 @@ jobs:
           | sed 's/\\ $//' > release_notes.md
           cat release_notes.md
 
+      - name: Get RBAC version
+        id: get_rbac_version
+        run: awk -F'=' '/^${{ github.event.head_commit.message }}=/ { print "rbac_version=" $2 }' rbac-versions.txt >> $GITHUB_OUTPUT
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v1
         with:
@@ -56,6 +62,7 @@ jobs:
       environment: delius-core-dev
       environment_url: https://ndelius.dev.probation.service.justice.gov.uk/
       version: ${{ github.event.head_commit.message }}
+      rbac_version: ${{ needs.release.outputs.rbac_version }}
     secrets: inherit
 
   delius-mis-dev:
