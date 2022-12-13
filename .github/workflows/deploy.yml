@@ -85,7 +85,7 @@ jobs:
             # update rbac version if specified
             if [ "${{ inputs.rbac_version }}" != "" ]; then
               if [ "$(grep -c "rbac_version:" ${{ inputs.environment }}/ansible/group_vars/ldap.yml)" -ge 1 ]; then
-                sed -i 's/^rbac_version:.*/rbac_version: "${{ inputs.rbac_version }}"/' '${{ inputs.environment }}/ansible/group_vars/ldap.yml'
+                sed -i 's/rbac_version:.*/rbac_version: "${{ inputs.rbac_version }}"/' '${{ inputs.environment }}/ansible/group_vars/ldap.yml'
               else
                 echo "---" > "${{ inputs.environment }}/ansible/group_vars/ldap.yml"
                 echo "ldap_config:" >> "${{ inputs.environment }}/ansible/group_vars/ldap.yml"
