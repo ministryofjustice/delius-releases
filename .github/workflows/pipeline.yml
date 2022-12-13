@@ -47,13 +47,13 @@ jobs:
         id: get_rbac_version
         run: awk -F'=' '/^${{ github.event.head_commit.message }}=/ { print "rbac_version=" $2 }' rbac-versions.txt >> $GITHUB_OUTPUT
 
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v1
-        with:
-          body_path: release_notes.md
-          files: ${{ steps.pdf.outputs.filename }}
-          name: ${{ github.event.head_commit.message }}
-          tag_name: v${{ github.event.head_commit.message }}
+      # - name: Create GitHub release
+      #   uses: softprops/action-gh-release@v1
+      #   with:
+      #     body_path: release_notes.md
+      #     files: ${{ steps.pdf.outputs.filename }}
+      #     name: ${{ github.event.head_commit.message }}
+      #     tag_name: v${{ github.event.head_commit.message }}
 
   delius-core-dev:
     uses: ./.github/workflows/deploy.yml
