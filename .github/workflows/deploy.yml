@@ -28,6 +28,10 @@ on:
         description: Delius version
         type: string
         required: true
+      rbac_version:
+        description: RBAC version
+        type: string
+        required: false
       environment:
         description: Environment
         type: environment
