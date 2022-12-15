@@ -2,8 +2,8 @@ name: Pipeline
 
 on:
   push:
-    # paths:
-    #   - 'release-notes/**/*.pdf'
+    paths:
+      - 'release-notes/**/*.pdf'
 
 env:
   version: ${{ github.event.head_commit.message }}
@@ -47,13 +47,13 @@ jobs:
         id: get_rbac_version
         run: awk -F'=' '/^${{ github.event.head_commit.message }}=/ { print "rbac_version=" $2 }' rbac-versions.txt >> $GITHUB_OUTPUT
 
-      # - name: Create GitHub release
-      #   uses: softprops/action-gh-release@v1
-      #   with:
-      #     body_path: release_notes.md
-      #     files: ${{ steps.pdf.outputs.filename }}
-      #     name: ${{ github.event.head_commit.message }}
-      #     tag_name: v${{ github.event.head_commit.message }}
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: release_notes.md
+          files: ${{ steps.pdf.outputs.filename }}
+          name: ${{ github.event.head_commit.message }}
+          tag_name: v${{ github.event.head_commit.message }}
 
   delius-core-dev:
     uses: ./.github/workflows/deploy.yml
@@ -65,101 +65,106 @@ jobs:
       rbac_version: ${{ needs.release.outputs.rbac_version }}
     secrets: inherit
 
-#   delius-mis-dev:
-#     uses: ./.github/workflows/deploy.yml
-#     needs: release
-#     with:
-#       environment: delius-mis-dev
-#       environment_url: https://ndelius.mis-dev.probation.service.justice.gov.uk/
-#       version: ${{ github.event.head_commit.message }}
-#     secrets: inherit
+  delius-mis-dev:
+    uses: ./.github/workflows/deploy.yml
+    needs: release
+    with:
+      environment: delius-mis-dev
+      environment_url: https://ndelius.mis-dev.probation.service.justice.gov.uk/
+      version: ${{ github.event.head_commit.message }}
+      rbac_version: ${{ needs.release.outputs.rbac_version }}
+    secrets: inherit
 
-#   test:
-#     uses: ./.github/workflows/deploy.yml
-#     needs: delius-core-dev
-#     with:
-#       environment: delius-test
-#       environment_url: https://ndelius.test.probation.service.justice.gov.uk/
-#       version: ${{ github.event.head_commit.message }}
-#     secrets: inherit
+  test:
+    uses: ./.github/workflows/deploy.yml
+    needs: delius-core-dev
+    with:
+      environment: delius-test
+      environment_url: https://ndelius.test.probation.service.justice.gov.uk/
+      version: ${{ github.event.head_commit.message }}
+      rbac_version: ${{ needs.release.outputs.rbac_version }}
+    secrets: inherit
 
-#   serenity-tests:
-#     runs-on: ubuntu-latest
-#     needs: test
-#     steps:
-#       - uses: aws-actions/configure-aws-credentials@v1
-#         with:
-#           aws-region: eu-west-2
-#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#           role-to-assume: ${{ secrets.AWS_ROLE_ARN_FOR_SERENITY_TESTS }}
-#           role-skip-session-tagging: true
-#           role-duration-seconds: 3600
-#           mask-aws-account-id: false
-#       - name: Run tests
-#         uses: marcus-bcl/aws-codebuild-run-build@4d318a89c4d0e91ba639c9220abd258d487efcce
-#         continue-on-error: true
-#         with:
-#           project-name: del-test-delius-serenity-tests-build
-#           disable-source-override: true
+  serenity-tests:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: eu-west-2
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_FOR_SERENITY_TESTS }}
+          role-skip-session-tagging: true
+          role-duration-seconds: 3600
+          mask-aws-account-id: false
+      - name: Run tests
+        uses: marcus-bcl/aws-codebuild-run-build@4d318a89c4d0e91ba639c9220abd258d487efcce
+        continue-on-error: true
+        with:
+          project-name: del-test-delius-serenity-tests-build
+          disable-source-override: true
 
-#   stage:
-#     uses: ./.github/workflows/deploy.yml
-#     needs: delius-core-dev
-#     with:
-#       environment: delius-stage
-#       environment_url: https://ndelius.stage.probation.service.justice.gov.uk/
-#       version: ${{ github.event.head_commit.message }}
-#     secrets: inherit
+  stage:
+    uses: ./.github/workflows/deploy.yml
+    needs: delius-core-dev
+    with:
+      environment: delius-stage
+      environment_url: https://ndelius.stage.probation.service.justice.gov.uk/
+      version: ${{ github.event.head_commit.message }}
+      rbac_version: ${{ needs.release.outputs.rbac_version }}
+    secrets: inherit
 
-#   performance-tests:
-#     if: false # Disabled until NDST/Version1 are happy to run the performance tests as part of the pipeline
-#     runs-on: ubuntu-latest
-#     needs: stage
-#     steps:
-#       - uses: aws-actions/configure-aws-credentials@v1
-#         with:
-#           aws-region: eu-west-2
-#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#           role-to-assume: ${{ secrets.AWS_ROLE_ARN_FOR_PERFORMANCE_TESTS }}
-#           role-skip-session-tagging: true
-#       - name: Run tests
-#         uses: marcus-bcl/aws-codebuild-run-build@4d318a89c4d0e91ba639c9220abd258d487efcce
-#         with:
-#           project-name: del-stage-delius-performance-tests-build
-#           disable-source-override: true
-#           env-vars-for-codebuild: CONCURRENT_USERS,DURATION
-#         env:
-#           CONCURRENT_USERS: 160
-#           DURATION: 3600 # 1 hour
+  performance-tests:
+    if: false # Disabled until NDST/Version1 are happy to run the performance tests as part of the pipeline
+    runs-on: ubuntu-latest
+    needs: stage
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: eu-west-2
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_FOR_PERFORMANCE_TESTS }}
+          role-skip-session-tagging: true
+      - name: Run tests
+        uses: marcus-bcl/aws-codebuild-run-build@4d318a89c4d0e91ba639c9220abd258d487efcce
+        with:
+          project-name: del-stage-delius-performance-tests-build
+          disable-source-override: true
+          env-vars-for-codebuild: CONCURRENT_USERS,DURATION
+        env:
+          CONCURRENT_USERS: 160
+          DURATION: 3600 # 1 hour
 
-#   pre-prod:
-#     uses: ./.github/workflows/deploy.yml
-#     needs:
-#       - serenity-tests
-# #      - performance-tests
-#     with:
-#       environment: delius-pre-prod
-#       environment_url: https://ndelius.pre-prod.delius.probation.hmpps.dsd.io/
-#       version: ${{ github.event.head_commit.message }}
-#     secrets: inherit
+  pre-prod:
+    uses: ./.github/workflows/deploy.yml
+    needs:
+      - serenity-tests
+#      - performance-tests
+    with:
+      environment: delius-pre-prod
+      environment_url: https://ndelius.pre-prod.delius.probation.hmpps.dsd.io/
+      version: ${{ github.event.head_commit.message }}
+      rbac_version: ${{ needs.release.outputs.rbac_version }}
+    secrets: inherit
 
-#   training:
-#     uses: ./.github/workflows/deploy.yml
-#     needs:
-#       - serenity-tests
-# #      - performance-tests
-#     with:
-#       environment: delius-training
-#       environment_url: https://ndelius.training.probation.service.justice.gov.uk/
-#       version: ${{ github.event.head_commit.message }}
-#     secrets: inherit
+  training:
+    uses: ./.github/workflows/deploy.yml
+    needs:
+      - serenity-tests
+#      - performance-tests
+    with:
+      environment: delius-training
+      environment_url: https://ndelius.training.probation.service.justice.gov.uk/
+      version: ${{ github.event.head_commit.message }}
+      rbac_version: ${{ needs.release.outputs.rbac_version }}
+    secrets: inherit
 
-#   complete:
-#     runs-on: ubuntu-latest
-#     needs: 
-#       - pre-prod
-#       - training
-#     steps:
-#       - run: echo Pipeline complete!
+  complete:
+    runs-on: ubuntu-latest
+    needs: 
+      - pre-prod
+      - training
+    steps:
+      - run: echo Pipeline complete!
