@@ -77,7 +77,9 @@ jobs:
 
   test:
     uses: ./.github/workflows/deploy.yml
-    needs: delius-core-dev
+    needs:
+      - release
+      - delius-core-dev
     with:
       environment: delius-test
       environment_url: https://ndelius.test.probation.service.justice.gov.uk/
@@ -107,7 +109,9 @@ jobs:
 
   stage:
     uses: ./.github/workflows/deploy.yml
-    needs: delius-core-dev
+    needs:
+      - release
+      - delius-core-dev
     with:
       environment: delius-stage
       environment_url: https://ndelius.stage.probation.service.justice.gov.uk/
@@ -152,6 +156,7 @@ jobs:
   training:
     uses: ./.github/workflows/deploy.yml
     needs:
+      - release
       - serenity-tests
 #      - performance-tests
     with:
