@@ -144,6 +144,7 @@ jobs:
   pre-prod:
     uses: ./.github/workflows/deploy.yml
     needs:
+      - release
       - serenity-tests
 #      - performance-tests
     with:
