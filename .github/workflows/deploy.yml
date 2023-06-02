@@ -64,7 +64,8 @@ jobs:
         shell: bash
         run: |
           # clone the configuration repo
-          git config --global user.name "[bot] delius-releases"
+          git config --global user.name '[bot] delius-releases'
+          git config --global user.email 'hmpps-engineering-jenkins@digital.justice.gov.uk'
           git clone "https://${{ secrets.EXT_GITHUB_TOKEN }}@github.com/ministryofjustice/hmpps-env-configs.git" env_configs
           cd env_configs
 
