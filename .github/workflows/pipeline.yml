@@ -22,10 +22,14 @@ jobs:
 
       - name: Get release note
         id: pdf
-        run: echo "::set-output name=filename::$(find release-notes -name '${{ env.filename }}')"
+        run: echo "filename=$(find release-notes -name "$filename")" | tee -a $GITHUB_OUTPUT
+        env:
+          filename: ${{ env.filename }}
 
       - name: PDF to HTML
-        run: pdftohtml -enc UTF-8 -noframes -nomerge '${{ steps.pdf.outputs.filename }}' release_notes.html
+        run: pdftohtml -enc UTF-8 -noframes -nomerge "$pdf_filename" release_notes.html
+        env:
+          pdf_filename: ${{ steps.pdf.outputs.filename }}
 
       - name: HTML to Markdown
         uses: docker://pandoc/core:2.19
@@ -45,10 +49,12 @@ jobs:
 
       - name: Get RBAC version
         id: get_rbac_version
-        run: awk -F'=' '/^${{ github.event.head_commit.message }}=/ { print "rbac_version=" $2 }' rbac-versions.txt >> $GITHUB_OUTPUT
+        run: awk -F'=' "/^${commit_message}=/ { print "'"'"rbac_version="'"'" \$2 }" rbac-versions.txt >> $GITHUB_OUTPUT
+        env:
+          commit_message: ${{ github.event.head_commit.message }}
 
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v0.1.15
         with:
           body_path: release_notes.md
           files: ${{ steps.pdf.outputs.filename }}
@@ -90,8 +96,9 @@ jobs:
   serenity-tests:
     runs-on: ubuntu-latest
     needs: test
+    timeout-minutes: 60
     steps:
-      - uses: aws-actions/configure-aws-credentials@v1
+      - uses: aws-actions/configure-aws-credentials@5727f247b64f324ec403ac56ae05e220fd02b65f # v2.1.0
         with:
           aws-region: eu-west-2
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -101,7 +108,7 @@ jobs:
           role-duration-seconds: 3600
           mask-aws-account-id: false
       - name: Run tests
-        uses: marcus-bcl/aws-codebuild-run-build@4d318a89c4d0e91ba639c9220abd258d487efcce
+        uses: aws-actions/aws-codebuild-run-build@d5a04846cedab61a0b7c897af0548af0d8fb14fb # v1.0.12
         continue-on-error: true
         with:
           project-name: del-test-delius-serenity-tests-build
@@ -123,8 +130,9 @@ jobs:
     if: false # Disabled until NDST/Version1 are happy to run the performance tests as part of the pipeline
     runs-on: ubuntu-latest
     needs: stage
+    timeout-minutes: 60
     steps:
-      - uses: aws-actions/configure-aws-credentials@v1
+      - uses: aws-actions/configure-aws-credentials@5727f247b64f324ec403ac56ae05e220fd02b65f # v2.1.0
         with:
           aws-region: eu-west-2
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -132,7 +140,7 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN_FOR_PERFORMANCE_TESTS }}
           role-skip-session-tagging: true
       - name: Run tests
-        uses: marcus-bcl/aws-codebuild-run-build@4d318a89c4d0e91ba639c9220abd258d487efcce
+        uses: aws-actions/aws-codebuild-run-build@d5a04846cedab61a0b7c897af0548af0d8fb14fb # v1.0.12
         with:
           project-name: del-stage-delius-performance-tests-build
           disable-source-override: true
