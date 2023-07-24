@@ -128,7 +128,7 @@ jobs:
         working-directory: env_configs
         shell: bash
         run: |
-          sed -i 's/^ndelius_version:.*/ndelius_version: "$current_version"/' '$environment/ansible/group_vars/all.yml'
+          sed -i "s/^ndelius_version:.*/ndelius_version: "'"'"$current_version"'"'"/" "$environment/ansible/group_vars/all.yml"
           git commit -m "Rollback Delius v$version in $environment" \
                      -m 'This was triggered by an automated deployment from https://github.com/ministryofjustice/delius-releases' \
                      "$environment/ansible/group_vars/all.yml"
