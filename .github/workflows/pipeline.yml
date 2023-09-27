@@ -61,16 +61,6 @@ jobs:
           name: ${{ github.event.head_commit.message }}
           tag_name: v${{ github.event.head_commit.message }}
 
-  delius-core-dev:
-    uses: ./.github/workflows/deploy.yml
-    needs: release
-    with:
-      environment: delius-core-dev
-      environment_url: https://ndelius.dev.probation.service.justice.gov.uk/
-      version: ${{ github.event.head_commit.message }}
-      rbac_version: ${{ needs.release.outputs.rbac_version }}
-    secrets: inherit
-
   delius-mis-dev:
     uses: ./.github/workflows/deploy.yml
     needs: release
@@ -85,7 +75,6 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     needs:
       - release
-      - delius-core-dev
     with:
       environment: delius-test
       environment_url: https://ndelius.test.probation.service.justice.gov.uk/
@@ -118,7 +107,6 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     needs:
       - release
-      - delius-core-dev
     with:
       environment: delius-stage
       environment_url: https://ndelius.stage.probation.service.justice.gov.uk/
