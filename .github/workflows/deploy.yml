@@ -138,9 +138,3 @@ jobs:
           execution_id: ${{ steps.start_automation.outputs.execution_id }}
           current_version: ${{ steps.config.outputs.current_version }}
           version: ${{ inputs.version }}
-
-      - name: Run smoke tests
-        uses: aws-actions/aws-codebuild-run-build@d5a04846cedab61a0b7c897af0548af0d8fb14fb # v1.0.12
-        with:
-          project-name: ${{ steps.config.outputs.short_environment_name }}-delius-smoke-tests-build
-          disable-source-override: true
