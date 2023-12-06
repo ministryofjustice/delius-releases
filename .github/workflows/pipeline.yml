@@ -83,6 +83,7 @@ jobs:
     secrets: inherit
 
   serenity-tests:
+    if: false # Disabled until NDST/Version1 are happy to run the end-to-end tests as part of the pipeline
     runs-on: ubuntu-latest
     needs: test
     timeout-minutes: 60
@@ -141,7 +142,8 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     needs:
       - release
-      - serenity-tests
+      - test
+#      - serenity-tests
 #      - performance-tests
     with:
       environment: delius-pre-prod
@@ -154,7 +156,8 @@ jobs:
     uses: ./.github/workflows/deploy.yml
     needs:
       - release
-      - serenity-tests
+      - test
+#      - serenity-tests
 #      - performance-tests
     with:
       environment: delius-training
