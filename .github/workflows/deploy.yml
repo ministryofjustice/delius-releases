@@ -71,6 +71,15 @@ jobs:
         env:
           environment: ${{ inputs.environment }}
 
+      - name: Map Delius environment name to modernisation-platform environment name
+        id: modernisation_platform_environment
+        run: |
+          if [ "$environment" == 'delius-mis-dev' ];  then name='dev'; fi
+          if [ "$environment" == 'delius-test' ];     then name='test'; fi
+          echo "name=${name}" | tee -a "$GITHUB_OUTPUT"
+        env:
+          environment: ${{ inputs.environment }}
+
       - name: Stop Probation Integration updates
         if: steps.integration_environment.outputs.name != ''
         run: gh workflow run readonly.yml --repo 'ministryofjustice/hmpps-probation-integration-services' --field 'action=enable' --field "environment=$environment"
@@ -86,7 +95,16 @@ jobs:
           environment: ${{ inputs.environment }}
           rbac_version: ${{ inputs.rbac_version }}
           version: ${{ inputs.version }}
-          token: ${{ secrets.EXT_GITHUB_TOKEN }}
+          token: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+
+      - name: Uplift RBAC in modernisation platform
+        if: steps.modernisation_platform_environment.outputs.name != ''
+        shell: bash
+        run: gh workflow run ldap-rbac-uplift.yml --repo 'ministryofjustice/hmpps-delius-operational-automation' --field "environment=$modernisation_platform_environment" --field "rbac_tag=$rbac_tag"
+        env:
+          modernisation_platform_environment: ${{ steps.modernisation_platform_environment.outputs.name }}-preapproved
+          rbac_tag: ${{ inputs.rbac_version }}
+          GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
 
       - name: Start automation
         id: start_automation
