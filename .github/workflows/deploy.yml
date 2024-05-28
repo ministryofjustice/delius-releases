@@ -98,6 +98,7 @@ jobs:
           token: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
 
       - name: Uplift RBAC in modernisation platform
+        id: uplift_rbac
         if: steps.modernisation_platform_environment.outputs.name != ''
         shell: bash
         run: gh workflow run ldap-rbac-uplift.yml --repo 'ministryofjustice/hmpps-delius-operational-automation' --field "environment=$modernisation_platform_environment" --field "rbac_tag=$rbac_tag"
@@ -166,7 +167,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PROBATION_INTEGRATION_GITHUB_TOKEN }}
 
       - name: Revert version on failure
-        if: always() && steps.config.outputs.version_changed == 'true' && (steps.start_automation.outcome == 'failure' || steps.wait_for_automation.outcome == 'failure')
+        if: always() && steps.config.outputs.version_changed == 'true' && (steps.start_automation.outcome == 'failure' || steps.wait_for_automation.outcome == 'failure' || steps.uplift_rbac.outcome == 'failure')
         working-directory: env_configs
         shell: bash
         run: |
