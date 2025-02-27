@@ -76,6 +76,8 @@ jobs:
         run: |
           if [ "$environment" == 'delius-mis-dev' ];  then name='dev'; fi
           if [ "$environment" == 'delius-test' ];     then name='test'; fi
+          if [ "$environment" == 'delius-stage' ];    then name='stage'; fi
+          if [ "$environment" == 'delius-pre-prod' ]; then name='preprod'; fi
           echo "name=${name}" | tee -a "$GITHUB_OUTPUT"
         env:
           environment: ${{ inputs.environment }}
