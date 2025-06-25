@@ -180,7 +180,7 @@ jobs:
           run_id="$uplift_run_id"
 
           status="in_progress"
-          while [[ "$status" == "in_progress" || "$status" == "queued" ]]; do
+          while [[ "$status" == "in_progress" || "$status" == "queued" || "$status" == "waiting" ]]; do
             echo "Waiting for run $run_id to complete..."
             sleep 10
             status=$(gh run view "$run_id" --repo ministryofjustice/hmpps-delius-operational-automation --json status -q '.status')
