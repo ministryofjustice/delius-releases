@@ -113,7 +113,7 @@ jobs:
         id: uplift_pdm
         if: steps.modernisation_platform_environment.outputs.name != ''
         shell: bash
-        run: 
+        run: |
           gh workflow run delius-db-pdm-uplift.yml --repo 'ministryofjustice/hmpps-delius-operational-automation' --field "TargetEnvironment=delius-core-$modernisation_platform_environment" --field "Version=$version" --field "CreateRestorePoint=No"
           sleep 5
           run_id=$(gh run list --repo ministryofjustice/hmpps-delius-operational-automation --workflow delius-db-pdm-uplift.yml --limit 1 --json databaseId -q '.[0].databaseId')
