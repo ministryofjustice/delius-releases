@@ -113,7 +113,11 @@ jobs:
         id: uplift_pdm
         if: steps.modernisation_platform_environment.outputs.name != ''
         shell: bash
-        run: gh workflow run delius-db-pdm-uplift.yml --repo 'ministryofjustice/hmpps-delius-operational-automation' --field "TargetEnvironment=delius-core-$modernisation_platform_environment" --field "Version=$version" --field "CreateRestorePoint=No"
+        run: 
+          gh workflow run delius-db-pdm-uplift.yml --repo 'ministryofjustice/hmpps-delius-operational-automation' --field "TargetEnvironment=delius-core-$modernisation_platform_environment" --field "Version=$version" --field "CreateRestorePoint=No"
+          sleep 5
+          run_id=$(gh run list --repo ministryofjustice/hmpps-delius-operational-automation --workflow delius-db-pdm-uplift.yml --limit 1 --json databaseId -q '.[0].databaseId')
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
         env:
           modernisation_platform_environment: ${{ steps.modernisation_platform_environment.outputs.name }}
           version: ${{ inputs.version }}
@@ -170,6 +174,26 @@ jobs:
         env:
           environment: ${{ inputs.environment }}
           execution_id: ${{ steps.start_automation.outputs.execution_id }}
+
+      - name: Wait for DB Uplift automation to complete
+        run: |
+          run_id="${{ steps.uplift_pdm.outputs.run_id }}"
+
+          status="in_progress"
+          while [[ "$status" == "in_progress" || "$status" == "queued" ]]; do
+            echo "Waiting for run $run_id to complete..."
+            sleep 10
+            status=$(gh run view "$run_id" --repo ministryofjustice/hmpps-delius-operational-automation --json status -q '.status')
+          done
+
+          conclusion=$(gh run view "$run_id" --repo ministryofjustice/hmpps-delius-operational-automation --json conclusion -q '.conclusion')
+          if [[ "$conclusion" != "success" ]]; then
+            echo "PDM Uplift failed with status: $conclusion"
+            echo "To check the logs use the following URL: https://github.com/ministryofjustice/hmpps-delius-operational-automation/actions/runs/$run_id"
+            exit 1
+          else
+            echo "PDM Uplift completed successfully."
+          fi
 
       - name: Re-enable Probation Integration updates
         if: steps.integration_environment.outputs.name != ''
