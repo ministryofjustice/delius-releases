@@ -82,114 +82,141 @@ jobs:
         env:
           environment: ${{ inputs.environment }}
 
-    #   - name: Stop Probation Integration updates
-    #     if: steps.integration_environment.outputs.name != ''
-    #     run: gh workflow run readonly.yml --repo 'ministryofjustice/hmpps-probation-integration-services' --field 'action=enable' --field "environment=$environment"
-    #     env:
-    #       environment: ${{ steps.integration_environment.outputs.name }}
-    #       GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+      - name: Stop Probation Integration updates
+        if: steps.integration_environment.outputs.name != ''
+        run: gh workflow run readonly.yml --repo 'ministryofjustice/hmpps-probation-integration-services' --field 'action=enable' --field "environment=$environment"
+        env:
+          environment: ${{ steps.integration_environment.outputs.name }}
+          GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
 
-    #   - name: Update configuration
-    #     id: config
-    #     shell: bash
-    #     run: ./.github/workflows/update-env-config.sh
-    #     env:
-    #       environment: ${{ inputs.environment }}
-    #       rbac_version: ${{ inputs.rbac_version }}
-    #       version: ${{ inputs.version }}
-    #       token: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+      - name: Update configuration
+        id: config
+        shell: bash
+        run: ./.github/workflows/update-env-config.sh
+        env:
+          environment: ${{ inputs.environment }}
+          rbac_version: ${{ inputs.rbac_version }}
+          version: ${{ inputs.version }}
+          token: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
 
-    #   - name: Uplift RBAC in modernisation platform
-    #     id: uplift_rbac
-    #     if: steps.modernisation_platform_environment.outputs.name != ''
-    #     shell: bash
-    #     run: gh workflow run ldap-rbac-uplift.yml --repo 'ministryofjustice/hmpps-delius-operational-automation' --field "environment=$modernisation_platform_environment" --field "rbac_tag=$rbac_tag"
-    #     env:
-    #       modernisation_platform_environment: ${{ steps.modernisation_platform_environment.outputs.name }}
-    #       rbac_tag: ${{ inputs.rbac_version }}
-    #       GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+      - name: Uplift RBAC in modernisation platform
+        id: uplift_rbac
+        if: steps.modernisation_platform_environment.outputs.name != ''
+        shell: bash
+        run: gh workflow run ldap-rbac-uplift.yml --repo 'ministryofjustice/hmpps-delius-operational-automation' --field "environment=$modernisation_platform_environment" --field "rbac_tag=$rbac_tag"
+        env:
+          modernisation_platform_environment: ${{ steps.modernisation_platform_environment.outputs.name }}
+          rbac_tag: ${{ inputs.rbac_version }}
+          GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
 
-    #   - name: Uplift PDM in modernisation platform
-    #     id: uplift_pdm
-    #     if: steps.modernisation_platform_environment.outputs.name != ''
-    #     shell: bash
-    #     run: gh workflow run delius-db-pdm-uplift.yml --repo 'ministryofjustice/hmpps-delius-operational-automation' --field "TargetEnvironment=delius-core-$modernisation_platform_environment" --field "Version=$version" --field "CreateRestorePoint=No"
-    #     env:
-    #       modernisation_platform_environment: ${{ steps.modernisation_platform_environment.outputs.name }}
-    #       version: ${{ inputs.version }}
-    #       GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+      - name: Uplift PDM in modernisation platform
+        id: uplift_pdm
+        if: steps.modernisation_platform_environment.outputs.name != ''
+        shell: bash
+        run: |
+          gh workflow run delius-db-pdm-uplift.yml --repo 'ministryofjustice/hmpps-delius-operational-automation' --field "TargetEnvironment=delius-core-$modernisation_platform_environment" --field "Version=$version" --field "CreateRestorePoint=No"
+          sleep 5
+          run_id=$(gh run list --repo ministryofjustice/hmpps-delius-operational-automation --workflow delius-db-pdm-uplift.yml --limit 1 --json databaseId -q '.[0].databaseId')
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+        env:
+          modernisation_platform_environment: ${{ steps.modernisation_platform_environment.outputs.name }}
+          version: ${{ inputs.version }}
+          GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
 
-    #   - name: Start automation
-    #     id: start_automation
-    #     if: steps.config.outputs.version_changed == 'true' || github.event_name == 'workflow_dispatch' # only deploy if version changed, or if started manually
-    #     shell: bash
-    #     run: |
-    #       # start the execution
-    #       execution=$(aws ssm start-automation-execution --document-name "${short_environment_name}-Delius-DeployApplication" --region eu-west-2 --parameters DeployDatabase=no)
-    #       execution_id=$(echo "$execution" | jq -r '.AutomationExecutionId')
-    #       echo "execution_id=$execution_id" | tee -a $GITHUB_OUTPUT
+      - name: Start automation
+        id: start_automation
+        if: steps.config.outputs.version_changed == 'true' || github.event_name == 'workflow_dispatch' # only deploy if version changed, or if started manually
+        shell: bash
+        run: |
+          # start the execution
+          execution=$(aws ssm start-automation-execution --document-name "${short_environment_name}-Delius-DeployApplication" --region eu-west-2 --parameters DeployDatabase=no)
+          execution_id=$(echo "$execution" | jq -r '.AutomationExecutionId')
+          echo "execution_id=$execution_id" | tee -a $GITHUB_OUTPUT
 
-    #       # output useful links
-    #       echo "Execution started. Check the status in AWS Systems Manager: https://eu-west-2.console.aws.amazon.com/systems-manager/automation/execution/${execution_id}?region=eu-west-2"
-    #       while [ -z "$codebuild_link" ]; do codebuild_link=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query "AutomationExecution.StepExecutions[?StepName == 'OutputBuildDetails'].Outputs.CodeBuildLink[]" --output text); sleep 1; done
-    #       echo "View the logs in AWS CodeBuild: $codebuild_link"
-    #     env:
-    #       short_environment_name: ${{ steps.config.outputs.short_environment_name }}
+          # output useful links
+          echo "Execution started. Check the status in AWS Systems Manager: https://eu-west-2.console.aws.amazon.com/systems-manager/automation/execution/${execution_id}?region=eu-west-2"
+          while [ -z "$codebuild_link" ]; do codebuild_link=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query "AutomationExecution.StepExecutions[?StepName == 'OutputBuildDetails'].Outputs.CodeBuildLink[]" --output text); sleep 1; done
+          echo "View the logs in AWS CodeBuild: $codebuild_link"
+        env:
+          short_environment_name: ${{ steps.config.outputs.short_environment_name }}
 
-    #   - name: Wait for automation to complete
-    #     id: wait_for_automation
-    #     if: steps.config.outputs.version_changed == 'true' || github.event_name == 'workflow_dispatch' # only deploy if version changed, or if started manually
-    #     shell: bash
-    #     run: |
-    #       # output useful links
-    #       echo "Execution started. Check the status in AWS Systems Manager: https://eu-west-2.console.aws.amazon.com/systems-manager/automation/execution/${execution_id}?region=eu-west-2"
-    #       while [ -z "$codebuild_link" ]; do codebuild_link=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query "AutomationExecution.StepExecutions[?StepName == 'OutputBuildDetails'].Outputs.CodeBuildLink[]" --output text); sleep 1; done
-    #       echo "View the logs in AWS CodeBuild: $codebuild_link"
+      - name: Wait for automation to complete
+        id: wait_for_automation
+        if: steps.config.outputs.version_changed == 'true' || github.event_name == 'workflow_dispatch' # only deploy if version changed, or if started manually
+        shell: bash
+        run: |
+          # output useful links
+          echo "Execution started. Check the status in AWS Systems Manager: https://eu-west-2.console.aws.amazon.com/systems-manager/automation/execution/${execution_id}?region=eu-west-2"
+          while [ -z "$codebuild_link" ]; do codebuild_link=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query "AutomationExecution.StepExecutions[?StepName == 'OutputBuildDetails'].Outputs.CodeBuildLink[]" --output text); sleep 1; done
+          echo "View the logs in AWS CodeBuild: $codebuild_link"
 
-    #       # wait for the execution to complete
-    #       status="Started"
-    #       start_time=$SECONDS
-    #       while [ "$status" != "Success" -a "$status" != "Failed" -a "$status" != "TimedOut" -a "$status" != "Cancelled" ]; do
-    #         status=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query 'AutomationExecution.AutomationExecutionStatus' --output text)
-    #         sleep 1
-    #       done
+          # wait for the execution to complete
+          status="Started"
+          start_time=$SECONDS
+          while [ "$status" != "Success" -a "$status" != "Failed" -a "$status" != "TimedOut" -a "$status" != "Cancelled" ]; do
+            status=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query 'AutomationExecution.AutomationExecutionStatus' --output text)
+            sleep 1
+          done
 
-    #       # output the summary
-    #       echo Execution completed. Status: $status
-    #       duration=$(( SECONDS - start_time ))
-    #       status_icon=$(test "$status" == "Success" && echo ':white_check_mark:' || echo ':x:')
-    #       echo '### Deployment Complete' >> $GITHUB_STEP_SUMMARY
-    #       echo "| Environment | $environment |" >> $GITHUB_STEP_SUMMARY
-    #       echo '| :--- | :--- |' >> $GITHUB_STEP_SUMMARY
-    #       echo "| Status | $status_icon $status |" >> $GITHUB_STEP_SUMMARY
-    #       echo "| Duration | :stopwatch: $((duration/60))m $((duration%60))s |" >> $GITHUB_STEP_SUMMARY
-    #       echo "| Logs | :memo: [View the logs in AWS CodeBuild]($codebuild_link) |" >> $GITHUB_STEP_SUMMARY
+          # output the summary
+          echo Execution completed. Status: $status
+          duration=$(( SECONDS - start_time ))
+          status_icon=$(test "$status" == "Success" && echo ':white_check_mark:' || echo ':x:')
+          echo '### Deployment Complete' >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | $environment |" >> $GITHUB_STEP_SUMMARY
+          echo '| :--- | :--- |' >> $GITHUB_STEP_SUMMARY
+          echo "| Status | $status_icon $status |" >> $GITHUB_STEP_SUMMARY
+          echo "| Duration | :stopwatch: $((duration/60))m $((duration%60))s |" >> $GITHUB_STEP_SUMMARY
+          echo "| Logs | :memo: [View the logs in AWS CodeBuild]($codebuild_link) |" >> $GITHUB_STEP_SUMMARY
 
-    #       # check the status
-    #       test "$status" == "Success"
-    #     env:
-    #       environment: ${{ inputs.environment }}
-    #       execution_id: ${{ steps.start_automation.outputs.execution_id }}
+          # check the status
+          test "$status" == "Success"
+        env:
+          environment: ${{ inputs.environment }}
+          execution_id: ${{ steps.start_automation.outputs.execution_id }}
 
-    #   - name: Re-enable Probation Integration updates
-    #     if: steps.integration_environment.outputs.name != ''
-    #     run: gh workflow run readonly.yml --repo 'ministryofjustice/hmpps-probation-integration-services' --field 'action=disable' --field "environment=$environment"
-    #     env:
-    #       environment: ${{ steps.integration_environment.outputs.name }}
-    #       GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+      - name: Wait for DB Uplift automation to complete
+        run: |
+          run_id="$uplift_run_id"
 
-    #   - name: Revert version on failure
-    #     if: always() && steps.config.outputs.version_changed == 'true' && (steps.start_automation.outcome == 'failure' || steps.wait_for_automation.outcome == 'failure' || steps.uplift_rbac.outcome == 'failure')
-    #     working-directory: env_configs
-    #     shell: bash
-    #     run: |
-    #       sed -i "s/^ndelius_version:.*/ndelius_version: "'"'"$current_version"'"'"/" "$environment/ansible/group_vars/all.yml"
-    #       git commit -m "Rollback Delius v$version in $environment" \
-    #                  -m 'This was triggered by an automated deployment from https://github.com/ministryofjustice/delius-releases' \
-    #                  "$environment/ansible/group_vars/all.yml"
-    #       git push
-    #     env:
-    #       environment: ${{ inputs.environment }}
-    #       execution_id: ${{ steps.start_automation.outputs.execution_id }}
-    #       current_version: ${{ steps.config.outputs.current_version }}
-    #       version: ${{ inputs.version }}
+          status="in_progress"
+          while [[ "$status" == "in_progress" || "$status" == "queued" || "$status" == "waiting" ]]; do
+            echo "Waiting for run $run_id to complete..."
+            sleep 10
+            status=$(gh run view "$run_id" --repo ministryofjustice/hmpps-delius-operational-automation --json status -q '.status')
+          done
+
+          conclusion=$(gh run view "$run_id" --repo ministryofjustice/hmpps-delius-operational-automation --json conclusion -q '.conclusion')
+          if [[ "$conclusion" != "success" ]]; then
+            echo "PDM Uplift failed with status: $conclusion"
+            echo "To check the logs use the following URL: https://github.com/ministryofjustice/hmpps-delius-operational-automation/actions/runs/$run_id"
+            exit 1
+          else
+            echo "PDM Uplift completed successfully."
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+          uplift_run_id: ${{ steps.uplift_pdm.outputs.run_id }}
+
+      - name: Re-enable Probation Integration updates
+        if: steps.integration_environment.outputs.name != ''
+        run: gh workflow run readonly.yml --repo 'ministryofjustice/hmpps-probation-integration-services' --field 'action=disable' --field "environment=$environment"
+        env:
+          environment: ${{ steps.integration_environment.outputs.name }}
+          GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+
+      - name: Revert version on failure
+        if: always() && steps.config.outputs.version_changed == 'true' && (steps.start_automation.outcome == 'failure' || steps.wait_for_automation.outcome == 'failure' || steps.uplift_rbac.outcome == 'failure')
+        working-directory: env_configs
+        shell: bash
+        run: |
+          sed -i "s/^ndelius_version:.*/ndelius_version: "'"'"$current_version"'"'"/" "$environment/ansible/group_vars/all.yml"
+          git commit -m "Rollback Delius v$version in $environment" \
+                     -m 'This was triggered by an automated deployment from https://github.com/ministryofjustice/delius-releases' \
+                     "$environment/ansible/group_vars/all.yml"
+          git push
+        env:
+          environment: ${{ inputs.environment }}
+          execution_id: ${{ steps.start_automation.outputs.execution_id }}
+          current_version: ${{ steps.config.outputs.current_version }}
+          version: ${{ inputs.version }}
