@@ -72,7 +72,7 @@ jobs:
     secrets: inherit
 
   test:
-    uses: ./.github/workflows/deploy.yml
+    uses: ./.github/workflows/deploy-mp.yml
     needs:
       - release
     with:
