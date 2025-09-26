@@ -198,6 +198,28 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
           uplift_run_id: ${{ steps.uplift_pdm.outputs.run_id }}
 
+      - name: Restart weblogic after database uplift to re-establish connection
+        run: |
+          cluster_name="del-delius-ecscluster-private-ecs"
+          service_name="del-$environment-weblogic-app-service"
+
+          echo "Forcing new weblogic deployment"
+
+          aws ecs update-service \
+            --cluster "$cluster_name"
+            --service "$service_name"
+            --force-new-deployment
+          
+          echo "Waiting for ECS service $service_name to stablize"
+
+          aws ecs wait service-stable \
+            --cluster "$cluster_name" \
+            --services "$service_name"
+
+          echo "ECS service has been successfully restarted"
+        env:
+          environment: ${{ steps.integration_environment.outputs.name }}
+
       - name: Re-enable Probation Integration updates
         if: steps.integration_environment.outputs.name != ''
         run: gh workflow run readonly.yml --repo 'ministryofjustice/hmpps-probation-integration-services' --field 'action=disable' --field "environment=$environment"
