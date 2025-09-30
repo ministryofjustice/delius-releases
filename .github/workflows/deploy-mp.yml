@@ -206,8 +206,8 @@ jobs:
           echo "Forcing new weblogic deployment"
 
           aws ecs update-service \
-            --cluster "$cluster_name"
-            --service "$service_name"
+            --cluster "$cluster_name" \
+            --service "$service_name" \
             --force-new-deployment
           
           echo "Waiting for ECS service $service_name to stablize"
@@ -241,4 +241,5 @@ jobs:
           environment: ${{ inputs.environment }}
           execution_id: ${{ steps.start_automation.outputs.execution_id }}
           current_version: ${{ steps.config.outputs.current_version }}
+
           version: ${{ inputs.version }}
