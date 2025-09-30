@@ -212,7 +212,7 @@ jobs:
           
           echo "Waiting for ECS service $service_name to stablize"
 
-          aws ecs wait service-stable \
+          aws ecs wait services-stable \
             --cluster "$cluster_name" \
             --services "$service_name"
 
