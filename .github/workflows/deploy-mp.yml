@@ -218,7 +218,7 @@ jobs:
 
           echo "ECS service has been successfully restarted"
         env:
-          environment: ${{ steps.integration_environment.outputs.name }}
+          environment: ${{ steps.modernisation_platform_environment.outputs.name }}
 
       - name: Re-enable Probation Integration updates
         if: steps.integration_environment.outputs.name != ''
