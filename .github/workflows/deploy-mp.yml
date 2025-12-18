@@ -203,6 +203,11 @@ jobs:
           cluster_name="del-delius-ecscluster-private-ecs"
           service_name="del-$environment-weblogic-app-service"
 
+          if [ "$environment" = "dev" ]; then
+            cluster_name="dmd-delius-ecscluster-private-ecs"
+            service_name="dmd-mis-dev-weblogic-app-service"
+          fi
+
           echo "Forcing new weblogic deployment"
 
           aws ecs update-service \
