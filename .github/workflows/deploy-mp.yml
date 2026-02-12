@@ -214,14 +214,27 @@ jobs:
             --cluster "$cluster_name" \
             --service "$service_name" \
             --force-new-deployment
-          
-          echo "Waiting for ECS service $service_name to stablize"
 
-          aws ecs wait services-stable \
-            --cluster "$cluster_name" \
-            --services "$service_name"
+          MAX_RETRIES=2
+          COUNT=1
 
-          echo "ECS service has been successfully restarted"
+          while [ $COUNT -le $MAX_RETRIES ]; do
+            echo "Waiting for ECS service to stabilize: Attempt ($COUNT/$MAX_RETRIES)"
+
+            if aws ecs wait services-stable \
+              --cluster "$cluster_name" \
+              --services "$service_name"; then
+              echo "ECS service has been successfully restarted"
+              exit 0
+            fi
+
+            echo "Attempt ($COUNT/$MAX_RETRIES) failed"
+            COUNT=$((COUNT + 1))
+          done
+
+          echo "ECS service not stable"
+          exit 1
+
         env:
           environment: ${{ steps.modernisation_platform_environment.outputs.name }}
 
