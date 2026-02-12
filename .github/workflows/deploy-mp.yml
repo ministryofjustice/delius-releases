@@ -222,8 +222,8 @@ jobs:
             echo "Waiting for ECS service to stabilize: Attempt ($COUNT/$MAX_RETRIES)"
 
             if aws ecs wait services-stable \
-              --cluster "$CLUSTER" \
-              --services "$SERVICE"; then
+              --cluster "$cluster_name" \
+              --services "$service_name"; then
               echo "ECS service has been successfully restarted"
               exit 0
             fi
