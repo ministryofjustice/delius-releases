@@ -1,0 +1,13 @@
+{
+  "dev": {
+    "weblogic": {
+      "image_tag": "6.5.15"
+    },
+    "weblogic-eis": {
+      "image_tag": "6.5.15-eis"
+    }
+  }
+}
+
+
+  
