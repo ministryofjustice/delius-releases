@@ -69,6 +69,7 @@ jobs:
           if [ "$environment" == 'test' ];     then account_name='delius-core-test'; fi
           if [ "$environment" == 'stage' ];    then account_name='delius-core-stage'; fi
           if [ "$environment" == 'pre-prod' ]; then account_name='delius-core-preproduction'; fi
+          echo "account_name=${account_name}"
           echo "account_name=${account_name}" >> "$GITHUB_OUTPUT"
         env:
           environment: ${{ inputs.environment }}
@@ -87,6 +88,7 @@ jobs:
               )" \
               --query 'taskDefinition.containerDefinitions[0].image' \
               --output text)
+            echo "Current ${SERVICE} version = ${IMAGE##*:}"
             echo "current_${SERVICE}_version=${IMAGE##*:}" >> "$GITHUB_OUTPUT"
           done
 
@@ -102,6 +104,7 @@ jobs:
           account_name: ${{ steps.modernisation_platform_environment.outputs.account_name }}
         run: |
           terraform init -backend-config=environments/${{ inputs.environment }}/backend.hcl -var-file=environments/${{ inputs.environment }}/terraform.tfvars
+          echo "Running terraform workspace select ${{ env.account_name }} -or-create"
           terraform workspace select ${{ env.account_name }} -or-create
 
       - name: Terraform Plan
