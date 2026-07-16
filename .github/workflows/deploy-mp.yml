@@ -26,11 +26,11 @@ on:
       weblogic_version:
         description: Delius version
         type: string
-        required: true
+        required: false
       weblogic_eis_version:
         description: Delius EIS version
         type: string
-        required: true
+        required: false
       rbac_version:
         description: RBAC version
         type: string
@@ -58,7 +58,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
-          role-to-assume: "arn:aws:iam::326912278139:role/modernisation-platform-oidc-cicd"
+          role-to-assume: "arn:aws:iam::326912278139:role/github-actions-plan"
           role-session-name: "delius-releases-${{ github.run_number }}"
           aws-region: "eu-west-2"
 
@@ -102,7 +102,7 @@ jobs:
           account_name: ${{ steps.modernisation_platform_environment.outputs.account_name }}
         run: |
           terraform init -var-file=environments/${{ inputs.environment }}/terraform.tfvars
-          terraform workspace select ${{ env.account_name }} || terraform workspace new ${{ env.account_name }}
+          terraform workspace select ${{ env.account_name }} -or-create
 
       - name: Terraform Plan
         id: plan
