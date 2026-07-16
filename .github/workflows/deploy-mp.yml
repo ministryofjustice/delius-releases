@@ -58,7 +58,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
-          role-to-assume: "arn:aws:iam::326912278139:role/github-actions-plan"
+          role-to-assume: "arn:aws:iam::326912278139:role/modernisation-platform-oidc-cicd" # Remember to set acount ID as variable when you get the perms to add Github ENV vars
           role-session-name: "delius-releases-${{ github.run_number }}"
           aws-region: "eu-west-2"
 
@@ -101,7 +101,7 @@ jobs:
         env:
           account_name: ${{ steps.modernisation_platform_environment.outputs.account_name }}
         run: |
-          terraform init -var-file=environments/${{ inputs.environment }}/terraform.tfvars
+          terraform init -backend-config=environments/${{ inputs.environment }}/backend.hcl -var-file=environments/${{ inputs.environment }}/terraform.tfvars
           terraform workspace select ${{ env.account_name }} -or-create
 
       - name: Terraform Plan
@@ -114,7 +114,7 @@ jobs:
           set -o pipefail
           exitcode=0
           tfargs="-detailed-exitcode"
-          terraform plan -var-file=environments/${{ inputs.environment }}/terraform.tfvars -var="weblogic_image_tag=$(echo ${{ env.WEBLOGIC_IMAGE_TAG }}" -var="weblogic_eis_image_tag=$(echo ${{ env.WEBLOGIC_EIS_IMAGE_TAG }}" $tfargs | tee tfplan.txt || exitcode=$?
+          terraform plan -backend-config=environments/${{ inputs.environment }}/backend.hcl -var-file=environments/${{ inputs.environment }}/terraform.tfvars -var="weblogic_image_tag=$(echo ${{ env.WEBLOGIC_IMAGE_TAG }}" -var="weblogic_eis_image_tag=$(echo ${{ env.WEBLOGIC_EIS_IMAGE_TAG }}" $tfargs | tee tfplan.txt || exitcode=$?
           echo "exitcode=${exitcode}"  # 0=clean plan, 1=error, 2=stuff in plan
           echo "exitcode=${exitcode}" >> $GITHUB_OUTPUT
           (( exitcode == 1 )) && exit 1 || exit 0
