@@ -17,6 +17,6 @@ terraform {
     key                  = "terraform.tfstate"
     region               = "eu-west-2"
     use_lockfile         = true
-    workspace_key_prefix = "environments/members/delius-core-ecs" # This will store the object as environments/members/delius-core-ecs/${workspace}/terraform.tfstate
+    workspace_key_prefix = "environments/members/delius-core/ecs" # This will store the object as environments/members/delius-core/ecs${workspace}/terraform.tfstate
   }
 }

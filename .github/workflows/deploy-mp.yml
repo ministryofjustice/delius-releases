@@ -7,11 +7,11 @@ on:
       weblogic_version:
         description: Delius version
         type: string
-        required: true
+        required: false
       weblogic_eis_version:
         description: Delius EIS version
         type: string
-        required: true
+        required: false
       rbac_version:
         description: RBAC version
         type: string
