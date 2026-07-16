@@ -1,1 +1,1 @@
-bucket = delius-core-dev-weblogic-ecs-remote-state
+bucket = "delius-core-dev-weblogic-ecs-remote-state"
