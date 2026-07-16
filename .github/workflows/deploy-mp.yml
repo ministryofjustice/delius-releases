@@ -104,8 +104,8 @@ jobs:
           account_name: ${{ steps.modernisation_platform_environment.outputs.account_name }}
         run: |
           terraform init -backend-config=environments/${{ inputs.environment }}/backend.hcl -var-file=environments/${{ inputs.environment }}/terraform.tfvars
-          echo "Running terraform workspace select ${{ env.account_name }} -or-create=false"
-          terraform workspace select ${{ env.account_name }} -or-create=false
+          echo "Running terraform workspace select -or-create ${{ env.account_name }}"
+          terraform workspace select -or-create ${{ env.account_name }}
 
       - name: Terraform Plan
         id: plan
