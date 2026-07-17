@@ -122,15 +122,18 @@ jobs:
           WEBLOGIC_IMAGE_TAG: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
           WEBLOGIC_EIS_IMAGE_TAG: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_EIS_IMAGE_TAG }}
         run: |
+
+          echo $WEBLOGIC_IMAGE_TAG
+          echo $WEBLOGIC_EIS_IMAGE_TAG
           echo "Checking if WebLogic image exists in ECR..."
-          if ! ERROR=$(aws ecr describe-images --registry-id "374269020027" --repository-name "delius-core-weblogic" --image-ids imageTag="${{ env.WEBLOGIC_IMAGE_TAG }}" 2>&1 >/dev/null); then
+          if ! ERROR=$(aws ecr describe-images --registry-id "374269020027" --repository-name "delius-core-weblogic" --image-ids imageTag=$WEBLOGIC_IMAGE_TAG 2>&1 >/dev/null); then
             echo "$ERROR"
             # echo "Error: Image tag $WEBLOGIC_IMAGE_TAG for WebLogic does not exist in ECR repository delius-core-weblogic."
             exit 1
           fi
 
           echo "Checking if WebLogic EIS image exists in ECR..."
-          if ! ERROR=$(aws ecr describe-images --registry-id "374269020027" --repository-name "delius-core-weblogic" --image-ids imageTag="${{ env.WEBLOGIC_EIS_IMAGE_TAG }}" 2>&1 >/dev/null); then
+          if ! ERROR=$(aws ecr describe-images --registry-id "374269020027" --repository-name "delius-core-weblogic" --image-ids imageTag=$WEBLOGIC_EIS_IMAGE_TAG 2>&1 >/dev/null); then
             echo "$ERROR"
             # echo "Error: Image tag $WEBLOGIC_EIS_IMAGE_TAG for WebLogic EIS does not exist in ECR repository delius-core-weblogic."
             exit 1
