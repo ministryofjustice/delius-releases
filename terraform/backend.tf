@@ -1,12 +1,3 @@
-# terraform {
-#   backend "s3" {
-#     encrypt = true
-#     key     = "terraform.tfstate"
-#     region  = "eu-west-2"
-#     bucket  = "modernisation-platform-terraform-state"
-#   }
-# }
-
 terraform {
   backend "s3" {
     encrypt              = true

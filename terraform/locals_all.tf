@@ -5,8 +5,6 @@ locals {
 
     modernisation_platform_account_id = data.aws_ssm_parameter.modernisation_platform_account_id.value
 
-    environment_management = jsondecode(data.aws_secretsmanager_secret_version.environment_management.secret_string)
-
     tags = merge(
       jsondecode(data.http.environments_file.response_body).tags,
       { "is-production" = var.is_production },

@@ -7,7 +7,7 @@ module "container_definition" {
 
   source                   = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//container?ref=v5.0.0"
   name                     = each.key
-  image                    = "${local.environment_management.account_ids["core-shared-services-production"]}.dkr.ecr.eu-west-2.amazonaws.com/delius-core-weblogic:${local.versions[var.short_environment_name][each.key].image_tag}"
+  image                    = "374269020027.dkr.ecr.eu-west-2.amazonaws.com/delius-core-weblogic:${local.versions[var.short_environment_name][each.key].image_tag}"
   memory                   = each.value.container_memory
   cpu                      = each.value.container_cpu
   essential                = true

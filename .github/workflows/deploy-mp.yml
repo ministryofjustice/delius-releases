@@ -92,6 +92,48 @@ jobs:
             echo "current_${SERVICE}_version=${IMAGE##*:}" >> "$GITHUB_OUTPUT"
           done
 
+      - name: Set Image tag Terraform variables
+        id: set_image_tag_vars
+        run: |
+          WEBLOGIC_IMAGE_TAG="${{ inputs.weblogic_version }}"
+          if [[ -z "$WEBLOGIC_IMAGE_TAG" ]]; then
+            WEBLOGIC_IMAGE_TAG="${{ steps.get_current_version.outputs.current_weblogic_version }}"
+            echo "No Weblogic image tag supplied; using deployed version: $WEBLOGIC_IMAGE_TAG"
+          else
+            echo "Using supplied Weblogic image tag: $WEBLOGIC_IMAGE_TAG"
+          fi
+
+          WEBLOGIC_EIS_IMAGE_TAG="${{ inputs.weblogic_eis_version }}"
+          if [[ -z "$WEBLOGIC_EIS_IMAGE_TAG" ]]; then
+            WEBLOGIC_EIS_IMAGE_TAG="${{ steps.get_current_version.outputs.current_weblogic-eis_version }}"
+            echo "No Weblogic EIS image tag supplied; using deployed version: $WEBLOGIC_EIS_IMAGE_TAG"
+          else
+            echo "Using supplied Weblogic EIS image tag: $WEBLOGIC_EIS_IMAGE_TAG"
+          fi
+
+          {
+            echo "WEBLOGIC_IMAGE_TAG=$WEBLOGIC_IMAGE_TAG"
+            echo "WEBLOGIC_EIS_IMAGE_TAG=$WEBLOGIC_EIS_IMAGE_TAG"
+          } >> "$GITHUB_ENV"
+
+      - name: Check if image version is in ECR
+        id: check_image_version
+        env:
+          WEBLOGIC_IMAGE_TAG: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
+          WEBLOGIC_EIS_IMAGE_TAG: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_EIS_IMAGE_TAG }}
+        run: |
+          echo "Checking if WebLogic image exists in ECR..."
+          if ! aws ecr describe-images --registry-id "374269020027" --repository-name "delius-core-weblogic" --image-ids imageTag="$WEBLOGIC_IMAGE_TAG" >/dev/null 2>&1; then
+            echo "Error: Image tag $WEBLOGIC_IMAGE_TAG for WebLogic does not exist in ECR repository delius-core-weblogic."
+            exit 1
+          fi
+
+          echo "Checking if WebLogic EIS image exists in ECR..."
+          if ! aws ecr describe-images --registry-id "374269020027" --repository-name "delius-core-weblogic" --image-ids imageTag="$WEBLOGIC_EIS_IMAGE_TAG" >/dev/null 2>&1; then
+            echo "Error: Image tag $WEBLOGIC_EIS_IMAGE_TAG for WebLogic EIS does not exist in ECR repository delius-core-weblogic."
+            exit 1
+          fi
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
@@ -103,20 +145,21 @@ jobs:
         env:
           account_name: ${{ steps.modernisation_platform_environment.outputs.account_name }}
         run: |
-          terraform init -backend-config=environments/${{ inputs.environment }}/backend.hcl -var-file=environments/${{ inputs.environment }}/terraform.tfvars
+          terraform init -backend-config=environments/${{ inputs.environment }}/backend.hcl
           echo "Running terraform workspace select -or-create ${{ env.account_name }}"
           terraform workspace select -or-create ${{ env.account_name }}
 
       - name: Terraform Plan
         id: plan
         env:
-          WEBLOGIC_IMAGE_TAG: ${{ inputs.weblogic_version }}
-          WEBLOGIC_EIS_IMAGE_TAG: ${{ inputs.weblogic_eis_version }}
+          WEBLOGIC_IMAGE_TAG: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
+          WEBLOGIC_EIS_IMAGE_TAG: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_EIS_IMAGE_TAG }}
         working-directory: terraform
         run: |
           set -o pipefail
           exitcode=0
           tfargs="-detailed-exitcode"
+          echo 'terraform plan -var-file="environments/${{ inputs.environment }}/terraform.tfvars" -var="weblogic_image_tag=${{ env.WEBLOGIC_IMAGE_TAG }}" -var="weblogic_eis_image_tag=${{ env.WEBLOGIC_EIS_IMAGE_TAG }}" $tfargs'
           terraform plan -var-file="environments/${{ inputs.environment }}/terraform.tfvars" -var="weblogic_image_tag=${{ env.WEBLOGIC_IMAGE_TAG }}" -var="weblogic_eis_image_tag=${{ env.WEBLOGIC_EIS_IMAGE_TAG }}" $tfargs | tee tfplan.txt || exitcode=$?
           echo "exitcode=${exitcode}"  # 0=clean plan, 1=error, 2=stuff in plan
           echo "exitcode=${exitcode}" >> $GITHUB_OUTPUT
