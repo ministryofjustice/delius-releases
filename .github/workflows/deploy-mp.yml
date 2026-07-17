@@ -114,7 +114,7 @@ jobs:
           {
             echo "WEBLOGIC_IMAGE_TAG=$WEBLOGIC_IMAGE_TAG"
             echo "WEBLOGIC_EIS_IMAGE_TAG=$WEBLOGIC_EIS_IMAGE_TAG"
-          } >> "$GITHUB_ENV"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Check if image version is in ECR
         id: check_image_version
@@ -122,7 +122,6 @@ jobs:
           WEBLOGIC_IMAGE_TAG: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
           WEBLOGIC_EIS_IMAGE_TAG: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_EIS_IMAGE_TAG }}
         run: |
-
           echo $WEBLOGIC_IMAGE_TAG
           echo $WEBLOGIC_EIS_IMAGE_TAG
           echo "Checking if WebLogic image exists in ECR..."
