@@ -50,8 +50,6 @@ module "ecs_service" {
   task_cpu    = each.value.container_cpu
   task_memory = each.value.container_memory
 
-  pin_task_definition_revision = each.value.task_definition_revision
-
   force_new_deployment               = false
   capacity_provider                  = "${each.key}-${var.short_environment_name}-cp"
   desired_count                      = each.value.task_count

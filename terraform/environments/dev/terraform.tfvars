@@ -7,7 +7,6 @@ is_production          = false
 
 services = {
   weblogic = {
-    task_definition_revision = 21
     container_port           = 8080
     container_memory         = 4096
     container_cpu            = 2048
@@ -20,7 +19,6 @@ services = {
     container_port           = 8080
     container_memory         = 4096
     container_cpu            = 2048
-    task_definition_revision = 16
     ec2_instance_type        = "r7i.large"
     task_count               = 1
     grace_period_seconds     = 600
