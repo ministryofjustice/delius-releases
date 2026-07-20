@@ -46,7 +46,6 @@ variable "weblogic_eis_tg_name" {
 
 variable "services" {
   type = map(object({
-    task_definition_revision = number
     container_port           = number
     container_memory         = number
     container_cpu            = number
