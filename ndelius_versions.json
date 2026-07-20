@@ -1,3 +1,5 @@
+// This config reflects the versions of WebLogic/EIS that are currently deployed to each environment.
+// It gets automatically updated by the deploy-mp.yml GitHub Action.
 {
   "dev": {
     "weblogic": {
