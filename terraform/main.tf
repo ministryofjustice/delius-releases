@@ -51,7 +51,7 @@ module "ecs_service" {
   task_memory = each.value.container_memory
 
   force_new_deployment               = false
-  capacity_provider                  = "${each.key}-${var.short_environment_name}-cp"
+  capacity_provider                  = "${each.key}-${var.short_environment_name}-ec2-cp"
   desired_count                      = each.value.task_count
   deployment_maximum_percent         = 200
   deployment_minimum_healthy_percent = 100
