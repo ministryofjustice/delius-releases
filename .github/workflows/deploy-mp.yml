@@ -65,10 +65,10 @@ jobs:
       - name: Map environment name to Modernisation Platform account name
         id: modernisation_platform_environment
         run: |
-          if [ "$environment" == 'dev' ];  then account_name='delius-core-development'; fi
+          if [ "$environment" == 'dev' ];      then account_name='delius-core-development'; fi
           if [ "$environment" == 'test' ];     then account_name='delius-core-test'; fi
           if [ "$environment" == 'stage' ];    then account_name='delius-core-stage'; fi
-          if [ "$environment" == 'pre-prod' ]; then account_name='delius-core-preproduction'; fi
+          if [ "$environment" == 'preprod' ];  then account_name='delius-core-preproduction'; fi
           echo "account_name=${account_name}"
           echo "account_name=${account_name}" >> "$GITHUB_OUTPUT"
         env:
@@ -136,6 +136,12 @@ jobs:
             exit 1
           fi
 
+      # - name: Stop Probation Integration updates
+      #   if: ${{ inputs.environment == 'test' || inputs.environment == 'stage' || inputs.environment == 'preprod' }}
+      #   run: gh workflow run readonly.yml --repo 'ministryofjustice/hmpps-probation-integration-services' --field 'action=enable' --field "environment=${{ inputs.environment }}"
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
@@ -180,25 +186,6 @@ jobs:
           echo 'terraform apply -var-file="environments/${{ inputs.environment }}/terraform.tfvars" -var="weblogic_image_tag=${{ env.WEBLOGIC_IMAGE_TAG }}" -var="weblogic_eis_image_tag=${{ env.WEBLOGIC_EIS_IMAGE_TAG }}" $tfargs'
           terraform apply -var-file="environments/${{ inputs.environment }}/terraform.tfvars" -var="weblogic_image_tag=${{ env.WEBLOGIC_IMAGE_TAG }}" -var="weblogic_eis_image_tag=${{ env.WEBLOGIC_EIS_IMAGE_TAG }}" $tfargs
 
-
-      # - name: Map Delius environment name to modernisation-platform environment name
-      #   id: modernisation_platform_environment
-      #   run: |
-      #     if [ "$environment" == 'delius-mis-dev' ];  then name='dev'; fi
-      #     if [ "$environment" == 'delius-test' ];     then name='test'; fi
-      #     if [ "$environment" == 'delius-stage' ];    then name='stage'; fi
-      #     if [ "$environment" == 'delius-pre-prod' ]; then name='preprod'; fi
-      #     echo "name=${name}" | tee -a "$GITHUB_OUTPUT"
-      #   env:
-      #     environment: ${{ inputs.environment }}
-
-      # - name: Stop Probation Integration updates
-      #   if: steps.integration_environment.outputs.name != ''
-      #   run: gh workflow run readonly.yml --repo 'ministryofjustice/hmpps-probation-integration-services' --field 'action=enable' --field "environment=$environment"
-      #   env:
-      #     environment: ${{ steps.integration_environment.outputs.name }}
-      #     GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
-
       # - name: Update configuration
       #   id: config
       #   shell: bash
@@ -206,17 +193,8 @@ jobs:
       #   env:
       #     environment: ${{ inputs.environment }}
       #     rbac_version: ${{ inputs.rbac_version }}
-      #     version: ${{ inputs.version }}
+      #     version: ${{ env.WEBLOGIC_IMAGE_TAG }}
       #     token: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
-
-      # - name: Update ndelius_versions.yaml with new version
-      #   id: update_ndelius_versions
-      #   shell: bash
-      #   run: |
-      #     # Update the ndelius_versions.yaml file with the new version
-      #     sed -i "s/^ndelius_version:.*/ndelius_version: $version/" ndelius_versions.yaml
-      #     git config --global user.name "GitHub Actions"
-      #     git config --global user.email "
 
       # - name: Uplift RBAC in modernisation platform
       #   id: uplift_rbac
@@ -242,9 +220,6 @@ jobs:
       #     version: ${{ inputs.version }}
       #     GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
 
-
-
-
       # - name: Wait for DB Uplift automation to complete
       #   run: |
       #     run_id="$uplift_run_id"
@@ -268,45 +243,49 @@ jobs:
       #     GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
       #     uplift_run_id: ${{ steps.uplift_pdm.outputs.run_id }}
 
-      # - name: Restart weblogic after database uplift to re-establish connection
-      #   run: |
-      #     cluster_name="del-delius-ecscluster-private-ecs"
-      #     service_name="del-$environment-weblogic-app-service"
+      - name: Restart weblogic after database uplift to re-establish connection
+        env:
+          environment: ${{ steps.modernisation_platform_environment.outputs.account_name }}
+        run: | 
+          cluster_name="$environment"-ecs
+          weblogic_service_name="${{ inputs.environment }}-weblogic"
+          weblogic_eis_service_name="${{ inputs.environment }}-weblogic-eis"
 
-      #     if [ "$environment" = "dev" ]; then
-      #       cluster_name="dmd-delius-ecscluster-private-ecs"
-      #       service_name="dmd-mis-dev-weblogic-app-service"
-      #     fi
+          echo "Cluster Name: $cluster_name"
+          echo "Weblogic Service Name: $weblogic_service_name"
+          echo "Weblogic EIS Service Name: $weblogic_eis_service_name"
 
-      #     echo "Forcing new weblogic deployment"
+          echo "Forcing new weblogic deployment..."
 
-      #     aws ecs update-service \
-      #       --cluster "$cluster_name" \
-      #       --service "$service_name" \
-      #       --force-new-deployment
+          aws ecs update-service \
+            --cluster "$cluster_name" \
+            --service "$weblogic_service_name" \
+            --force-new-deployment
 
-      #     MAX_RETRIES=2
-      #     COUNT=1
+          aws ecs update-service \
+            --cluster "$cluster_name" \
+            --service "$weblogic_eis_service_name" \
+            --force-new-deployment
 
-      #     while [ $COUNT -le $MAX_RETRIES ]; do
-      #       echo "Waiting for ECS service to stabilize: Attempt ($COUNT/$MAX_RETRIES)"
+          MAX_RETRIES=2
+          COUNT=1
 
-      #       if aws ecs wait services-stable \
-      #         --cluster "$cluster_name" \
-      #         --services "$service_name"; then
-      #         echo "ECS service has been successfully restarted"
-      #         exit 0
-      #       fi
+          while [ $COUNT -le $MAX_RETRIES ]; do
+            echo "Waiting for Weblogic ECS service to stabilize: Attempt ($COUNT/$MAX_RETRIES)"
 
-      #       echo "Attempt ($COUNT/$MAX_RETRIES) failed"
-      #       COUNT=$((COUNT + 1))
-      #     done
+            if aws ecs wait services-stable \
+              --cluster "$cluster_name" \
+              --services "$weblogic_service_name" "$weblogic_eis_service_name"; then
+              echo "ECS service has been successfully restarted"
+              exit 0
+            fi
 
-      #     echo "ECS service not stable"
-      #     exit 1
+            echo "Attempt ($COUNT/$MAX_RETRIES) failed"
+            COUNT=$((COUNT + 1))
+          done
 
-      #   env:
-      #     environment: ${{ steps.modernisation_platform_environment.outputs.name }}
+          echo "ECS service not stable"
+          exit 1
 
       # - name: Re-enable Probation Integration updates
       #   if: steps.integration_environment.outputs.name != ''

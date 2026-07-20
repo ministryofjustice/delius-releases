@@ -1,5 +1,8 @@
 locals {
-  versions = jsondecode(file("../ndelius_versions.json"))
+  image_tags = {
+    weblogic     = var.weblogic_image_tag
+    weblogic-eis = var.weblogic_eis_image_tag
+  }
 }
 
 module "container_definition" {
@@ -7,7 +10,7 @@ module "container_definition" {
 
   source                   = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//container?ref=v5.0.0"
   name                     = each.key
-  image                    = "374269020027.dkr.ecr.eu-west-2.amazonaws.com/delius-core-weblogic:${local.versions[var.short_environment_name][each.key].image_tag}"
+  image                    = "374269020027.dkr.ecr.eu-west-2.amazonaws.com/delius-core-weblogic:${local.image_tags[each.key]}"
   memory                   = each.value.container_memory
   cpu                      = each.value.container_cpu
   essential                = true
