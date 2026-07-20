@@ -247,7 +247,7 @@ jobs:
         env:
           environment: ${{ steps.modernisation_platform_environment.outputs.account_name }}
         run: | 
-          cluster_name="$environment"-ecs
+          cluster_name="delius-core-${{ inputs.environment }}-cluster"
           weblogic_service_name="${{ inputs.environment }}-weblogic"
           weblogic_eis_service_name="${{ inputs.environment }}-weblogic-eis"
 
