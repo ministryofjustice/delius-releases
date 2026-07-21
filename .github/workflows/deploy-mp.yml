@@ -69,10 +69,10 @@ jobs:
       - name: Map environment name to Modernisation Platform account name and hmpps-env-configs name
         id: set_env_names
         run: |
-          if [ "$environment" == 'dev' ];      then account_name='delius-core-development'; hmpps_envs_name='delius-mis-dev'; fi
-          if [ "$environment" == 'test' ];     then account_name='delius-core-test'; hmpps_envs_name='delius-test'; fi
-          if [ "$environment" == 'stage' ];    then account_name='delius-core-stage'; hmpps_envs_name='delius-stage'; fi
-          if [ "$environment" == 'preprod' ];  then account_name='delius-core-preproduction'; hmpps_envs_name='delius-pre-prod'; fi
+          if [ "$environment" == 'dev' ];      then account_name='delius-core-development'; hmpps_env_name='delius-mis-dev'; fi
+          if [ "$environment" == 'test' ];     then account_name='delius-core-test'; hmpps_env_name='delius-test'; fi
+          if [ "$environment" == 'stage' ];    then account_name='delius-core-stage'; hmpps_env_name='delius-stage'; fi
+          if [ "$environment" == 'preprod' ];  then account_name='delius-core-preproduction'; hmpps_env_name='delius-pre-prod'; fi
           echo "account_name=${account_name}"
           echo "hmpps_env_name=${hmpps_env_name}"
           echo "account_name=${account_name}" >> "$GITHUB_OUTPUT"
