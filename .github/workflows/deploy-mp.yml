@@ -205,7 +205,7 @@ jobs:
 
       - name: Uplift RBAC in modernisation platform
         id: uplift_rbac
-        if: ${{ steps.set_env_names.outputs.name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ steps.set_env_names.outputs.account_name != '' && inputs.terraform_apply_only == false }}
         env:
           modernisation_platform_environment: ${{ steps.set_env_names.outputs.account_name }}
           rbac_tag: ${{ inputs.rbac_version }}
@@ -215,7 +215,7 @@ jobs:
 
       - name: Uplift PDM in modernisation platform
         id: uplift_pdm
-        if: ${{ steps.set_env_names.outputs.name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ steps.set_env_names.outputs.account_name != '' && inputs.terraform_apply_only == false }}
         shell: bash
         run: |
           gh workflow run delius-db-pdm-uplift.yml --repo 'ministryofjustice/hmpps-delius-operational-automation' --field "TargetEnvironment=$modernisation_platform_environment" --field "Version=$version" --field "CreateRestorePoint=No"
@@ -224,7 +224,7 @@ jobs:
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
 
       - name: Wait for DB Uplift automation to complete
-        if: ${{ steps.set_env_names.outputs.name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ steps.set_env_names.outputs.account_name != '' && inputs.terraform_apply_only == false }}
         env:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
           uplift_run_id: ${{ steps.uplift_pdm.outputs.run_id }}
@@ -249,7 +249,7 @@ jobs:
 
       - name: Restart weblogic after database uplift to re-establish connection
         id: restart_weblogic
-        if: ${{ steps.set_env_names.outputs.name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ steps.set_env_names.outputs.account_name != '' && inputs.terraform_apply_only == false }}
         env:
           environment: ${{ steps.set_env_names.outputs.account_name }}
         run: | 
