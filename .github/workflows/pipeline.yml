@@ -61,7 +61,7 @@ jobs:
           name: ${{ github.event.head_commit.message }}
           tag_name: v${{ github.event.head_commit.message }}
 
-  delius-mis-dev:
+  dev:
     uses: ./.github/workflows/deploy-mp.yml
     needs: release
     with:
