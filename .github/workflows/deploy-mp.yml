@@ -7,7 +7,7 @@ on:
   workflow_call:
     inputs:
       terraform_apply_only:
-        description: Only runs steps that apply terraform changes, skipping the RBAC and PDM uplift steps
+        description: Only run Terraform apply (skip RBAC/PDM uplift)
         type: boolean
         required: false
         default: false
@@ -27,7 +27,7 @@ on:
   workflow_dispatch:
     inputs:
       terraform_apply_only:
-        description: Only runs steps that apply terraform changes, skipping the RBAC and PDM uplift steps
+        description: Only run Terraform apply (skip RBAC/PDM uplift)
         type: boolean
         required: false
         default: false
@@ -66,15 +66,17 @@ jobs:
           role-session-name: "delius-releases-${{ github.run_number }}"
           aws-region: "eu-west-2"
 
-      - name: Map environment name to Modernisation Platform account name
-        id: modernisation_platform_environment
+      - name: Map environment name to Modernisation Platform account name and hmpps-env-configs name
+        id: set_env_names
         run: |
-          if [ "$environment" == 'dev' ];      then account_name='delius-core-development'; fi
-          if [ "$environment" == 'test' ];     then account_name='delius-core-test'; fi
-          if [ "$environment" == 'stage' ];    then account_name='delius-core-stage'; fi
-          if [ "$environment" == 'preprod' ];  then account_name='delius-core-preproduction'; fi
+          if [ "$environment" == 'dev' ];      then account_name='delius-core-development'; hmpps_envs_name='delius-mis-dev'; fi
+          if [ "$environment" == 'test' ];     then account_name='delius-core-test'; hmpps_envs_name='delius-test'; fi
+          if [ "$environment" == 'stage' ];    then account_name='delius-core-stage'; hmpps_envs_name='delius-stage'; fi
+          if [ "$environment" == 'preprod' ];  then account_name='delius-core-preproduction'; hmpps_envs_name='delius-pre-prod'; fi
           echo "account_name=${account_name}"
+          echo "hmpps_env_name=${hmpps_env_name}"
           echo "account_name=${account_name}" >> "$GITHUB_OUTPUT"
+          echo "hmpps_env_name=${hmpps_env_name}" >> "$GITHUB_OUTPUT"
         env:
           environment: ${{ inputs.environment }}
 
@@ -155,7 +157,7 @@ jobs:
       - name: Terraform Init
         working-directory: terraform
         env:
-          account_name: ${{ steps.modernisation_platform_environment.outputs.account_name }}
+          account_name: ${{ steps.set_env_names.outputs.account_name }}
         run: |
           terraform init -backend-config=environments/${{ inputs.environment }}/backend.hcl
           echo "Running terraform workspace select -or-create ${{ env.account_name }}"
@@ -196,16 +198,16 @@ jobs:
         shell: bash
         run: ./.github/workflows/update-env-config.sh
         env:
-          environment: ${{ inputs.environment }}
+          environment: ${{ steps.set_env_names.outputs.hmpps_env_name }}
           rbac_version: ${{ inputs.rbac_version }}
           version: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
           token: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
 
       - name: Uplift RBAC in modernisation platform
         id: uplift_rbac
-        if: ${{ steps.modernisation_platform_environment.outputs.name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ steps.set_env_names.outputs.name != '' && inputs.terraform_apply_only == false }}
         env:
-          modernisation_platform_environment: ${{ steps.modernisation_platform_environment.outputs.account_name }}
+          modernisation_platform_environment: ${{ steps.set_env_names.outputs.account_name }}
           rbac_tag: ${{ inputs.rbac_version }}
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
         shell: bash
@@ -213,7 +215,7 @@ jobs:
 
       - name: Uplift PDM in modernisation platform
         id: uplift_pdm
-        if: ${{ steps.modernisation_platform_environment.outputs.name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ steps.set_env_names.outputs.name != '' && inputs.terraform_apply_only == false }}
         shell: bash
         run: |
           gh workflow run delius-db-pdm-uplift.yml --repo 'ministryofjustice/hmpps-delius-operational-automation' --field "TargetEnvironment=$modernisation_platform_environment" --field "Version=$version" --field "CreateRestorePoint=No"
@@ -222,7 +224,7 @@ jobs:
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
 
       - name: Wait for DB Uplift automation to complete
-        if: ${{ steps.modernisation_platform_environment.outputs.name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ steps.set_env_names.outputs.name != '' && inputs.terraform_apply_only == false }}
         env:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
           uplift_run_id: ${{ steps.uplift_pdm.outputs.run_id }}
@@ -247,9 +249,9 @@ jobs:
 
       - name: Restart weblogic after database uplift to re-establish connection
         id: restart_weblogic
-        if: ${{ steps.modernisation_platform_environment.outputs.name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ steps.set_env_names.outputs.name != '' && inputs.terraform_apply_only == false }}
         env:
-          environment: ${{ steps.modernisation_platform_environment.outputs.account_name }}
+          environment: ${{ steps.set_env_names.outputs.account_name }}
         run: | 
           cluster_name="delius-core-${{ inputs.environment }}-cluster"
           weblogic_service_name="${{ inputs.environment }}-weblogic"
