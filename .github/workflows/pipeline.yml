@@ -62,10 +62,10 @@ jobs:
           tag_name: v${{ github.event.head_commit.message }}
 
   dev:
-    uses: ./.github/workflows/deploy-mp.yml
+    uses: ./.github/workflows/deploy-mp-ecs.yml
     needs: release
     with:
-      environment: delius-mis-dev
+      environment: dev
       environment_url: https://ndelius.mis-dev.probation.service.justice.gov.uk/
       version: ${{ github.event.head_commit.message }}
       rbac_version: ${{ needs.release.outputs.rbac_version }}

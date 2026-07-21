@@ -4,15 +4,10 @@ on:
   # Allow a deployment to be started from the pipeline
   workflow_call:
     inputs:
-      terraform_apply_only:
-        description: Only runs steps that apply terraform changes, skipping the RBAC and PDM uplift steps
-        type: boolean
-        required: false
-        default: false
       version:
         description: Delius version
         type: string
-        required: false
+        required: true
       rbac_version:
         description: RBAC version
         type: string
@@ -21,173 +16,78 @@ on:
         description: Environment
         type: string
         required: true
+      environment_url:
+        description: URL
+        type: string
+        required: false
+        default: ''
   # Allow a deployment to be started from the UI
   workflow_dispatch:
     inputs:
-      terraform_apply_only:
-        description: Only runs steps that apply terraform changes, skipping the RBAC and PDM uplift steps
-        type: boolean
-        required: false
-        default: false
       version:
         description: Delius version
         type: string
-        required: false
+        required: true
       rbac_version:
         description: RBAC version
         type: string
         required: false
       environment:
         description: Environment
-        type: choice
+        type: environment
         required: true
-        options:
-          - dev
-      
+      environment_url:
+        description: Environment URL (optional)
+        type: string
+        required: false
+        default: ''
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    permissions:
-      id-token: write
-      contents: read
     environment:
       name: ${{ inputs.environment }}
+      url: ${{ inputs.environment_url }}
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6.0.2
+      - uses: aws-actions/configure-aws-credentials@5727f247b64f324ec403ac56ae05e220fd02b65f # v2.1.0
         with:
-          role-to-assume: "arn:aws:iam::326912278139:role/modernisation-platform-oidc-cicd" # Remember to set acount ID as variable when you get the perms to add Github ENV vars
-          role-session-name: "delius-releases-${{ github.run_number }}"
-          aws-region: "eu-west-2"
+          aws-region: eu-west-2
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-skip-session-tagging: true
+          role-duration-seconds: 3600
+          mask-aws-account-id: false
 
-      - name: Map environment name to Modernisation Platform account name
-        id: modernisation_platform_environment
+      - name: Map Delius environment name to integration environment name
+        id: integration_environment
         run: |
-          if [ "$environment" == 'dev' ];      then account_name='delius-core-development'; fi
-          if [ "$environment" == 'test' ];     then account_name='delius-core-test'; fi
-          if [ "$environment" == 'stage' ];    then account_name='delius-core-stage'; fi
-          if [ "$environment" == 'preprod' ];  then account_name='delius-core-preproduction'; fi
-          echo "account_name=${account_name}"
-          echo "account_name=${account_name}" >> "$GITHUB_OUTPUT"
+          if [ "$environment" == 'delius-test' ];     then name='test'; fi
+          if [ "$environment" == 'delius-pre-prod' ]; then name='preprod'; fi
+          if [ "$environment" == 'delius-prod' ];     then name='prod'; fi
+          echo "name=${name}" | tee -a "$GITHUB_OUTPUT"
         env:
           environment: ${{ inputs.environment }}
 
-      - name: Get currently running version of Weblogic/EIS
-        id: get_current_version
+      - name: Map Delius environment name to modernisation-platform environment name
+        id: modernisation_platform_environment
         run: |
-          for SERVICE in weblogic weblogic-eis; do
-            IMAGE=$(aws ecs describe-task-definition \
-              --task-definition "$(
-                aws ecs describe-services \
-                  --cluster "delius-core-${{ inputs.environment }}-cluster" \
-                  --services "${{ inputs.environment }}-$SERVICE" \
-                  --query 'services[0].taskDefinition' \
-                  --output text
-              )" \
-              --query 'taskDefinition.containerDefinitions[0].image' \
-              --output text)
-            echo "Current ${SERVICE} version = ${IMAGE##*:}"
-            echo "current_${SERVICE}_version=${IMAGE##*:}" >> "$GITHUB_OUTPUT"
-          done
-
-      - name: Set Image tag Terraform variables
-        id: set_image_tag_vars
-        run: |
-          WEBLOGIC_IMAGE_TAG="${{ inputs.version }}"
-          if [[ -z "$WEBLOGIC_IMAGE_TAG" ]]; then
-            WEBLOGIC_IMAGE_TAG="${{ steps.get_current_version.outputs.current_weblogic_version }}"
-            echo "No Weblogic image tag supplied; using deployed version: $WEBLOGIC_IMAGE_TAG"
-          else
-            echo "Using supplied Weblogic image tag: $WEBLOGIC_IMAGE_TAG"
-          fi
-
-          WEBLOGIC_EIS_IMAGE_TAG="${{ inputs.version }}-eis"
-          if [[ -z "$WEBLOGIC_EIS_IMAGE_TAG" ]]; then
-            WEBLOGIC_EIS_IMAGE_TAG="${{ steps.get_current_version.outputs.current_weblogic-eis_version }}"
-            echo "No Weblogic EIS image tag supplied; using deployed version: $WEBLOGIC_EIS_IMAGE_TAG"
-          else
-            echo "Using supplied Weblogic EIS image tag: $WEBLOGIC_EIS_IMAGE_TAG"
-          fi
-
-          {
-            echo "WEBLOGIC_IMAGE_TAG=$WEBLOGIC_IMAGE_TAG"
-            echo "WEBLOGIC_EIS_IMAGE_TAG=$WEBLOGIC_EIS_IMAGE_TAG"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Check if image version is in ECR
-        id: check_image_version
+          if [ "$environment" == 'delius-mis-dev' ];  then name='dev'; fi
+          if [ "$environment" == 'delius-test' ];     then name='test'; fi
+          if [ "$environment" == 'delius-stage' ];    then name='stage'; fi
+          if [ "$environment" == 'delius-pre-prod' ]; then name='preprod'; fi
+          echo "name=${name}" | tee -a "$GITHUB_OUTPUT"
         env:
-          WEBLOGIC_IMAGE_TAG: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
-          WEBLOGIC_EIS_IMAGE_TAG: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
-        run: |
-          echo "Checking if WebLogic version: $WEBLOGIC_IMAGE_TAG exists in ECR..."
-          if ! ERROR=$(aws ecr describe-images --registry-id "374269020027" --repository-name "delius-core-weblogic" --image-ids imageTag=$WEBLOGIC_IMAGE_TAG 2>&1 >/dev/null); then
-            echo "$ERROR"
-            # echo "Error: Image tag $WEBLOGIC_IMAGE_TAG for WebLogic does not exist in ECR repository delius-core-weblogic."
-            exit 1
-          fi
-
-          echo "Checking if WebLogic EIS version: $WEBLOGIC_EIS_IMAGE_TAG exists in ECR..."
-          if ! ERROR=$(aws ecr describe-images --registry-id "374269020027" --repository-name "delius-core-weblogic" --image-ids imageTag=$WEBLOGIC_EIS_IMAGE_TAG 2>&1 >/dev/null); then
-            echo "$ERROR"
-            # echo "Error: Image tag $WEBLOGIC_EIS_IMAGE_TAG for WebLogic EIS does not exist in ECR repository delius-core-weblogic."
-            exit 1
-          fi
+          environment: ${{ inputs.environment }}
 
       - name: Stop Probation Integration updates
-        if: ${{ inputs.environment == 'test' || inputs.environment == 'stage' || inputs.environment == 'preprod' }}
-        run: gh workflow run readonly.yml --repo 'ministryofjustice/hmpps-probation-integration-services' --field 'action=enable' --field "environment=${{ inputs.environment }}"
+        if: steps.integration_environment.outputs.name != ''
+        run: gh workflow run readonly.yml --repo 'ministryofjustice/hmpps-probation-integration-services' --field 'action=enable' --field "environment=$environment"
         env:
+          environment: ${{ steps.integration_environment.outputs.name }}
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
-        with:
-          terraform_version: "1.10.0"
-          terraform_wrapper: false
-
-      - name: Terraform Init
-        working-directory: terraform
-        env:
-          account_name: ${{ steps.modernisation_platform_environment.outputs.account_name }}
-        run: |
-          terraform init -backend-config=environments/${{ inputs.environment }}/backend.hcl
-          echo "Running terraform workspace select -or-create ${{ env.account_name }}"
-          terraform workspace select -or-create ${{ env.account_name }}
-
-      - name: Terraform Plan
-        id: terraform_plan
-        env:
-          WEBLOGIC_IMAGE_TAG: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
-          WEBLOGIC_EIS_IMAGE_TAG: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_EIS_IMAGE_TAG }}
-        working-directory: terraform
-        run: |
-          set -o pipefail
-          exitcode=0
-          tfargs="-detailed-exitcode"
-          echo 'terraform plan -var-file="environments/${{ inputs.environment }}/terraform.tfvars" -var="weblogic_image_tag=${{ env.WEBLOGIC_IMAGE_TAG }}" -var="weblogic_eis_image_tag=${{ env.WEBLOGIC_EIS_IMAGE_TAG }}" $tfargs'
-          terraform plan -var-file="environments/${{ inputs.environment }}/terraform.tfvars" -var="weblogic_image_tag=${{ env.WEBLOGIC_IMAGE_TAG }}" -var="weblogic_eis_image_tag=${{ env.WEBLOGIC_EIS_IMAGE_TAG }}" $tfargs | tee tfplan.txt || exitcode=$?
-          echo "exitcode=${exitcode}"  # 0=clean plan, 1=error, 2=stuff in plan
-          echo "exitcode=${exitcode}" >> $GITHUB_OUTPUT
-          (( exitcode == 1 )) && exit 1 || exit 0
-
-      - name: Terraform Apply
-        id: terraform_apply
-        if: steps.terraform_plan.outputs.exitcode == '2'
-        env:
-          WEBLOGIC_IMAGE_TAG: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
-          WEBLOGIC_EIS_IMAGE_TAG: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_EIS_IMAGE_TAG }}
-        working-directory: terraform
-        run: |
-          set -o pipefail
-          exitcode=0
-          tfargs="-auto-approve"
-          echo 'terraform apply -var-file="environments/${{ inputs.environment }}/terraform.tfvars" -var="weblogic_image_tag=${{ env.WEBLOGIC_IMAGE_TAG }}" -var="weblogic_eis_image_tag=${{ env.WEBLOGIC_EIS_IMAGE_TAG }}" $tfargs'
-          terraform apply -var-file="environments/${{ inputs.environment }}/terraform.tfvars" -var="weblogic_image_tag=${{ env.WEBLOGIC_IMAGE_TAG }}" -var="weblogic_eis_image_tag=${{ env.WEBLOGIC_EIS_IMAGE_TAG }}" $tfargs
 
       - name: Update configuration
         id: config
@@ -196,34 +96,86 @@ jobs:
         env:
           environment: ${{ inputs.environment }}
           rbac_version: ${{ inputs.rbac_version }}
-          version: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
+          version: ${{ inputs.version }}
           token: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
 
       - name: Uplift RBAC in modernisation platform
         id: uplift_rbac
-        if: ${{ steps.modernisation_platform_environment.outputs.name != '' && inputs.terraform_apply_only == false }}
-        env:
-          modernisation_platform_environment: ${{ steps.modernisation_platform_environment.outputs.account_name }}
-          rbac_tag: ${{ inputs.rbac_version }}
-          GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+        if: steps.modernisation_platform_environment.outputs.name != ''
         shell: bash
         run: gh workflow run ldap-rbac-uplift.yml --repo 'ministryofjustice/hmpps-delius-operational-automation' --field "environment=$modernisation_platform_environment" --field "rbac_tag=$rbac_tag"
+        env:
+          modernisation_platform_environment: ${{ steps.modernisation_platform_environment.outputs.name }}
+          rbac_tag: ${{ inputs.rbac_version }}
+          GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
 
       - name: Uplift PDM in modernisation platform
         id: uplift_pdm
-        if: ${{ steps.modernisation_platform_environment.outputs.name != '' && inputs.terraform_apply_only == false }}
+        if: steps.modernisation_platform_environment.outputs.name != ''
         shell: bash
         run: |
-          gh workflow run delius-db-pdm-uplift.yml --repo 'ministryofjustice/hmpps-delius-operational-automation' --field "TargetEnvironment=$modernisation_platform_environment" --field "Version=$version" --field "CreateRestorePoint=No"
+          gh workflow run delius-db-pdm-uplift.yml --repo 'ministryofjustice/hmpps-delius-operational-automation' --field "TargetEnvironment=delius-core-$modernisation_platform_environment" --field "Version=$version" --field "CreateRestorePoint=No"
           sleep 5
           run_id=$(gh run list --repo ministryofjustice/hmpps-delius-operational-automation --workflow delius-db-pdm-uplift.yml --limit 1 --json databaseId -q '.[0].databaseId')
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+        env:
+          modernisation_platform_environment: ${{ steps.modernisation_platform_environment.outputs.name }}
+          version: ${{ inputs.version }}
+          GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+
+      - name: Start automation
+        id: start_automation
+        if: steps.config.outputs.version_changed == 'true' || github.event_name == 'workflow_dispatch' # only deploy if version changed, or if started manually
+        shell: bash
+        run: |
+          # start the execution
+          execution=$(aws ssm start-automation-execution --document-name "${short_environment_name}-Delius-DeployApplication" --region eu-west-2 --parameters DeployDatabase=no)
+          execution_id=$(echo "$execution" | jq -r '.AutomationExecutionId')
+          echo "execution_id=$execution_id" | tee -a $GITHUB_OUTPUT
+
+          # output useful links
+          echo "Execution started. Check the status in AWS Systems Manager: https://eu-west-2.console.aws.amazon.com/systems-manager/automation/execution/${execution_id}?region=eu-west-2"
+          while [ -z "$codebuild_link" ]; do codebuild_link=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query "AutomationExecution.StepExecutions[?StepName == 'OutputBuildDetails'].Outputs.CodeBuildLink[]" --output text); sleep 1; done
+          echo "View the logs in AWS CodeBuild: $codebuild_link"
+        env:
+          short_environment_name: ${{ steps.config.outputs.short_environment_name }}
+
+      - name: Wait for automation to complete
+        id: wait_for_automation
+        if: steps.config.outputs.version_changed == 'true' || github.event_name == 'workflow_dispatch' # only deploy if version changed, or if started manually
+        shell: bash
+        run: |
+          # output useful links
+          echo "Execution started. Check the status in AWS Systems Manager: https://eu-west-2.console.aws.amazon.com/systems-manager/automation/execution/${execution_id}?region=eu-west-2"
+          while [ -z "$codebuild_link" ]; do codebuild_link=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query "AutomationExecution.StepExecutions[?StepName == 'OutputBuildDetails'].Outputs.CodeBuildLink[]" --output text); sleep 1; done
+          echo "View the logs in AWS CodeBuild: $codebuild_link"
+
+          # wait for the execution to complete
+          status="Started"
+          start_time=$SECONDS
+          while [ "$status" != "Success" -a "$status" != "Failed" -a "$status" != "TimedOut" -a "$status" != "Cancelled" ]; do
+            status=$(aws ssm get-automation-execution --automation-execution-id "$execution_id" --query 'AutomationExecution.AutomationExecutionStatus' --output text)
+            sleep 1
+          done
+
+          # output the summary
+          echo Execution completed. Status: $status
+          duration=$(( SECONDS - start_time ))
+          status_icon=$(test "$status" == "Success" && echo ':white_check_mark:' || echo ':x:')
+          echo '### Deployment Complete' >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | $environment |" >> $GITHUB_STEP_SUMMARY
+          echo '| :--- | :--- |' >> $GITHUB_STEP_SUMMARY
+          echo "| Status | $status_icon $status |" >> $GITHUB_STEP_SUMMARY
+          echo "| Duration | :stopwatch: $((duration/60))m $((duration%60))s |" >> $GITHUB_STEP_SUMMARY
+          echo "| Logs | :memo: [View the logs in AWS CodeBuild]($codebuild_link) |" >> $GITHUB_STEP_SUMMARY
+
+          # check the status
+          test "$status" == "Success"
+        env:
+          environment: ${{ inputs.environment }}
+          execution_id: ${{ steps.start_automation.outputs.execution_id }}
 
       - name: Wait for DB Uplift automation to complete
-        if: ${{ steps.modernisation_platform_environment.outputs.name != '' && inputs.terraform_apply_only == false }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
-          uplift_run_id: ${{ steps.uplift_pdm.outputs.run_id }}
         run: |
           run_id="$uplift_run_id"
 
@@ -242,42 +194,36 @@ jobs:
           else
             echo "PDM Uplift completed successfully."
           fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+          uplift_run_id: ${{ steps.uplift_pdm.outputs.run_id }}
 
       - name: Restart weblogic after database uplift to re-establish connection
-        id: restart_weblogic
-        if: ${{ steps.modernisation_platform_environment.outputs.name != '' && inputs.terraform_apply_only == false }}
-        env:
-          environment: ${{ steps.modernisation_platform_environment.outputs.account_name }}
-        run: | 
-          cluster_name="delius-core-${{ inputs.environment }}-cluster"
-          weblogic_service_name="${{ inputs.environment }}-weblogic"
-          weblogic_eis_service_name="${{ inputs.environment }}-weblogic-eis"
+        run: |
+          cluster_name="del-delius-ecscluster-private-ecs"
+          service_name="del-$environment-weblogic-app-service"
 
-          echo "Cluster Name: $cluster_name"
-          echo "Weblogic Service Name: $weblogic_service_name"
-          echo "Weblogic EIS Service Name: $weblogic_eis_service_name"
+          if [ "$environment" = "dev" ]; then
+            cluster_name="dmd-delius-ecscluster-private-ecs"
+            service_name="dmd-mis-dev-weblogic-app-service"
+          fi
 
-          echo "Forcing new weblogic deployment..."
+          echo "Forcing new weblogic deployment"
 
           aws ecs update-service \
             --cluster "$cluster_name" \
-            --service "$weblogic_service_name" \
-            --force-new-deployment
-
-          aws ecs update-service \
-            --cluster "$cluster_name" \
-            --service "$weblogic_eis_service_name" \
+            --service "$service_name" \
             --force-new-deployment
 
           MAX_RETRIES=2
           COUNT=1
 
           while [ $COUNT -le $MAX_RETRIES ]; do
-            echo "Waiting for Weblogic ECS service to stabilize: Attempt ($COUNT/$MAX_RETRIES)"
+            echo "Waiting for ECS service to stabilize: Attempt ($COUNT/$MAX_RETRIES)"
 
             if aws ecs wait services-stable \
               --cluster "$cluster_name" \
-              --services "$weblogic_service_name" "$weblogic_eis_service_name"; then
+              --services "$service_name"; then
               echo "ECS service has been successfully restarted"
               exit 0
             fi
@@ -289,23 +235,29 @@ jobs:
           echo "ECS service not stable"
           exit 1
 
-      - name: Re-enable Probation Integration updates
-        if: ${{ inputs.environment == 'test' || inputs.environment == 'stage' || inputs.environment == 'preprod' }}
         env:
+          environment: ${{ steps.modernisation_platform_environment.outputs.name }}
+
+      - name: Re-enable Probation Integration updates
+        if: steps.integration_environment.outputs.name != ''
+        run: gh workflow run readonly.yml --repo 'ministryofjustice/hmpps-probation-integration-services' --field 'action=disable' --field "environment=$environment"
+        env:
+          environment: ${{ steps.integration_environment.outputs.name }}
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
-        run: gh workflow run readonly.yml --repo 'ministryofjustice/hmpps-probation-integration-services' --field 'action=disable' --field "environment=${{ inputs.environment}}"
 
       - name: Revert version on failure
-        if: always() && steps.config.outputs.version_changed == 'true' && (steps.terraform_plan.outcome == 'failure' || steps.terraform_apply.outcome == 'failure' || steps.restart_weblogic.outcome == 'failure' || steps.uplift_rbac.outcome == 'failure')
+        if: always() && steps.config.outputs.version_changed == 'true' && (steps.start_automation.outcome == 'failure' || steps.wait_for_automation.outcome == 'failure' || steps.uplift_rbac.outcome == 'failure')
         working-directory: env_configs
         shell: bash
-        env:
-          environment: ${{ inputs.environment }}
-          current_version: ${{ steps.config.outputs.current_version }}
-          version: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
         run: |
           sed -i "s/^ndelius_version:.*/ndelius_version: "'"'"$current_version"'"'"/" "$environment/ansible/group_vars/all.yml"
           git commit -m "Rollback Delius v$version in $environment" \
                      -m 'This was triggered by an automated deployment from https://github.com/ministryofjustice/delius-releases' \
                      "$environment/ansible/group_vars/all.yml"
           git push
+        env:
+          environment: ${{ inputs.environment }}
+          execution_id: ${{ steps.start_automation.outputs.execution_id }}
+          current_version: ${{ steps.config.outputs.current_version }}
+
+          version: ${{ inputs.version }}
