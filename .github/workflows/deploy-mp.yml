@@ -220,7 +220,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
         shell: bash
         run: |
-          gh workflow run delius-db-pdm-uplift.yml --repo 'ministryofjustice/hmpps-delius-operational-automation' --field "TargetEnvironment=${{ inputs.environment }}" --field "Version=${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}" --field "CreateRestorePoint=No"
+          gh workflow run delius-db-pdm-uplift.yml --repo 'ministryofjustice/hmpps-delius-operational-automation' --field "TargetEnvironment='delius-core-${{ inputs.environment }}'" --field "Version=${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}" --field "CreateRestorePoint=No"
           sleep 5
           run_id=$(gh run list --repo ministryofjustice/hmpps-delius-operational-automation --workflow delius-db-pdm-uplift.yml --limit 1 --json databaseId -q '.[0].databaseId')
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
