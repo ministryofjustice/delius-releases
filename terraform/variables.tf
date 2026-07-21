@@ -49,7 +49,6 @@ variable "services" {
     container_port           = number
     container_memory         = number
     container_cpu            = number
-    ec2_instance_type        = string
     task_count               = number
 		grace_period_seconds		 = number
   }))

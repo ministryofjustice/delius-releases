@@ -10,16 +10,14 @@ services = {
     container_port           = 8080
     container_memory         = 4096
     container_cpu            = 2048
-    ec2_instance_type        = "r7i.large"
     task_count               = 1
     grace_period_seconds     = 480
   }
 
   weblogic-eis = {
     container_port           = 8080
-    container_memory         = 4096
-    container_cpu            = 2048
-    ec2_instance_type        = "r7i.large"
+    container_memory         = 2048
+    container_cpu            = 1024
     task_count               = 1
     grace_period_seconds     = 600
   }
@@ -31,7 +29,7 @@ weblogic_params = {
   BREACH_NOTICE_API_URL             = "https://breach-notice-api-dev.hmpps.service.justice.gov.uk"
   BREACH_NOTICE_UI_URL_FORMAT       = "https://breach-notice-dev.hmpps.service.justice.gov.uk/breach-notice/%s"
   COOKIE_SECURE                     = "true"
-  # DELIUS_API_URL                    = "" # No longer needed
+  # DELIUS_API_URL                    = "" # Possibly no longer needed
   DMS_HOST                          = "hmpps-delius-alfresco-dev.apps.live.cloud-platform.service.justice.gov.uk"
   DMS_OFFICE_URI_HOST               = "hmpps-delius-alfresco-dev.apps.live.cloud-platform.service.justice.gov.uk"
   DMS_OFFICE_URI_PORT               = "443"
