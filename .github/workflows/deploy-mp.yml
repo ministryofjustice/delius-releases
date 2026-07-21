@@ -216,6 +216,8 @@ jobs:
       - name: Uplift PDM in modernisation platform
         id: uplift_pdm
         if: ${{ steps.set_env_names.outputs.account_name != '' && inputs.terraform_apply_only == false }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
         shell: bash
         run: |
           gh workflow run delius-db-pdm-uplift.yml --repo 'ministryofjustice/hmpps-delius-operational-automation' --field "TargetEnvironment=${{ inputs.environment }}" --field "Version=${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}" --field "CreateRestorePoint=No"
