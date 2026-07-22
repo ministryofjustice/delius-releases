@@ -57,7 +57,7 @@ module "ecs_service" {
   capacity_provider                  = "${each.key}-${var.short_environment_name}-ec2-cp"
   desired_count                      = each.value.task_count
   deployment_minimum_healthy_percent = 50
-  deployment_maximum_percent         = 100
+  deployment_maximum_percent         = 200
 
   service_role_arn   = data.aws_iam_role.ecs_service[each.key].arn
   task_role_arn      = data.aws_iam_role.ecs_task[each.key].arn
