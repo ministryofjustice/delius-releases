@@ -12,7 +12,6 @@ services = {
     container_cpu                      = 2048
     task_count                         = 1
     grace_period_seconds               = 480
-    deployment_minimum_healthy_percent = 50
   }
 
   weblogic-eis = {
