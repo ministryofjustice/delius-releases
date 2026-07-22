@@ -7,28 +7,29 @@ is_production          = false
 
 services = {
   weblogic = {
-    container_port           = 8080
-    container_memory         = 4096
-    container_cpu            = 2048
-    task_count               = 4
-    grace_period_seconds     = 480
+    container_port                     = 8080
+    container_memory                   = 4096
+    container_cpu                      = 2048
+    task_count                         = 4
+    grace_period_seconds               = 480
+    deployment_minimum_healthy_percent = 50
   }
 
   weblogic-eis = {
-    container_port           = 8080
-    container_memory         = 2048
-    container_cpu            = 1024
-    task_count               = 1
-    grace_period_seconds     = 600
+    container_port       = 8080
+    container_memory     = 2048
+    container_cpu        = 1024
+    task_count           = 1
+    grace_period_seconds = 600
   }
 }
 
 weblogic_params = {
-  API_CLIENT_ID                     = "delius-ui-client"
-  AWS_REGION                        = "eu-west-2"
-  BREACH_NOTICE_API_URL             = "https://breach-notice-api-test.hmpps.service.justice.gov.uk"
-  BREACH_NOTICE_UI_URL_FORMAT       = "https://breach-notice-test.hmpps.service.justice.gov.uk/breach-notice/%s"
-  COOKIE_SECURE                     = "true"
+  API_CLIENT_ID               = "delius-ui-client"
+  AWS_REGION                  = "eu-west-2"
+  BREACH_NOTICE_API_URL       = "https://breach-notice-api-test.hmpps.service.justice.gov.uk"
+  BREACH_NOTICE_UI_URL_FORMAT = "https://breach-notice-test.hmpps.service.justice.gov.uk/breach-notice/%s"
+  COOKIE_SECURE               = "true"
   # DELIUS_API_URL                    = "" # Possibly no longer needed
   DMS_HOST                          = "hmpps-delius-alfresco-test.apps.live.cloud-platform.service.justice.gov.uk"
   DMS_OFFICE_URI_HOST               = "hmpps-delius-alfresco-test.apps.live.cloud-platform.service.justice.gov.uk"

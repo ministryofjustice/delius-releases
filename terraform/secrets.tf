@@ -17,12 +17,12 @@ locals {
     "USERMANAGEMENT_SECRET"
   ]
 
-	secrets_map = [
-		for key, parameter in aws_ssm_parameter.secure : {
-			name      = key
-			valueFrom = parameter.arn
-		}
-	]	
+  secrets_map = [
+    for key, parameter in aws_ssm_parameter.secure : {
+      name      = key
+      valueFrom = parameter.arn
+    }
+  ]
 }
 
 resource "aws_ssm_parameter" "secure" {
