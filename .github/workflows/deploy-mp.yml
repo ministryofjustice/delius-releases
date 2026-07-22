@@ -317,8 +317,8 @@ jobs:
         working-directory: env_configs
         shell: bash
         env:
-          environment: ${{ inputs.environment }}
-          current_version: ${{ steps.config.outputs.current_version }}
+          environment: ${{ steps.set_env_names.outputs.hmpps_env_name }}
+          current_version: ${{ steps.get_current_version.outputs.current_weblogic_version }}
           version: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
         run: |
           sed -i "s/^ndelius_version:.*/ndelius_version: "'"'"$current_version"'"'"/" "$environment/ansible/group_vars/all.yml"
