@@ -2,7 +2,7 @@ vpc_id                 = "vpc-0b327c73f2d0a27d2"
 long_environment_name  = "test"
 short_environment_name = "test"
 weblogic_tg_name       = "test-weblogic-ff35"
-weblogic_eis_tg_name   = "test-weblogic-eis-cf32f"
+weblogic_eis_tg_name   = "test-weblogic-eis-f32f"
 is_production          = false
 
 services = {
