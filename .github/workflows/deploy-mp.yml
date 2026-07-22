@@ -63,7 +63,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
         with:
-          role-to-assume: "arn:aws:iam::326912278139:role/modernisation-platform-oidc-cicd" # Remember to set acount ID as variable when you get the perms to add Github ENV vars
+          role-to-assume: "arn:aws:iam::673591086753:role/modernisation-platform-oidc-cicd" # Remember to set acount ID as variable when you get the perms to add Github ENV vars
           role-session-name: "delius-releases-${{ github.run_number }}"
           aws-region: "eu-west-2"
 
