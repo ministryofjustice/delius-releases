@@ -1,6 +1,6 @@
-# This differs from deploy.yml in that it deploys the ECS services into MP as opposed to legacy
+# This differs from deploy.yml in that it deploys the ECS services (nDelius) into MP instead of legacy
 # It should be referenced in the pipeline.yml workflow by environments that have been fully migrated to MP
-name: Deploy Mod Platform ECS
+name: Deploy Mod Platform (New)
 
 on:
   # Allow a deployment to be started from the pipeline
