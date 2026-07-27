@@ -41,7 +41,7 @@ weblogic_params = {
   DMS_PROTOCOL                      = "https"
   EIS_USER_CONTEXT                  = "cn=EISUsers,ou=Users,dc=moj,dc=com"
   ELASTICSEARCH_URL                 = "https://probation-search-dev.hmpps.service.justice.gov.uk/delius"
-  GDPR_URL                          = "https://delius-gdpr-ui-test.hmpps.service.justice.gov.uk/gdpr/ui/" # GDPR not deployed to CP yet, <URL>/gdpr/ui/homepage
+  GDPR_URL                          = "https://delius-gdpr-ui-test.hmpps.service.justice.gov.uk/gdpr/ui/"
   JDBC_CONNECTION_POOL_MAX_CAPACITY = "100"
   JDBC_CONNECTION_POOL_MIN_CAPACITY = "50"
   JDBC_URL                          = "jdbc:oracle:thin:@(DESCRIPTION=(LOAD_BALANCE=OFF)(FAILOVER=ON)(CONNECT_TIMEOUT=10)(RETRY_COUNT=3)(ADDRESS_LIST=(ADDRESS=(PROTOCOL=tcp)(HOST=delius-core-test-db-1.hmpps-test.modernisation-platform.internal)(PORT=1521)))(CONNECT_DATA=(SERVICE_NAME=TSTNDA_TAF)))"
