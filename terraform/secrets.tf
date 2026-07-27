@@ -2,7 +2,6 @@
 locals {
   secrets_list = [
     "ADMIN_PASSWORD",
-    "ANALYTICS_TAG",
     "API_CLIENT_SECRET",
     "APPLICATIONINSIGHTS_CONNECTION_STRING",
     "AWS_ACCESS_KEY_ID",
