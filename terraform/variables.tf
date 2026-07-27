@@ -57,6 +57,6 @@ variable "services" {
 }
 
 variable "weblogic_params" {
-  type        = map()
+  type        = map(string)
   description = "List of parameters"
 }
