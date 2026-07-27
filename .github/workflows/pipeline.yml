@@ -66,7 +66,6 @@ jobs:
     needs: release
     with:
       environment: dev
-      environment_url: https://ndelius.mis-dev.probation.service.justice.gov.uk/
       version: ${{ github.event.head_commit.message }}
       rbac_version: ${{ needs.release.outputs.rbac_version }}
     secrets: inherit
