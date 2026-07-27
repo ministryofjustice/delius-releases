@@ -35,6 +35,7 @@ module "container_definition" {
   log_configuration = {
     logDriver = "awslogs"
     options = {
+      "awslogs-create-group"  = "true"
       "awslogs-group"         = "${local.env_name}-${each.key}"
       "awslogs-region"        = "${data.aws_region.current.region}"
       "awslogs-stream-prefix" = "${local.env_name}-${each.key}"
