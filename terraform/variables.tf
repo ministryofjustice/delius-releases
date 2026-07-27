@@ -57,48 +57,6 @@ variable "services" {
 }
 
 variable "weblogic_params" {
-  type = object({
-    API_CLIENT_ID                     = string
-    AWS_REGION                        = string
-    BREACH_NOTICE_API_URL             = string
-    BREACH_NOTICE_UI_URL_FORMAT       = string
-    COOKIE_SECURE                     = string
-    DMS_HOST                          = string
-    DMS_OFFICE_URI_HOST               = string
-    DMS_OFFICE_URI_PORT               = string
-    DMS_PORT                          = string
-    DMS_PROTOCOL                      = string
-    EIS_USER_CONTEXT                  = string
-    ELASTICSEARCH_URL                 = string
-    GDPR_URL                          = string
-    JDBC_CONNECTION_POOL_MAX_CAPACITY = string
-    JDBC_CONNECTION_POOL_MIN_CAPACITY = string
-    JDBC_URL                          = string
-    JDBC_USERNAME                     = string
-    LDAP_HOST                         = string
-    LDAP_PRINCIPAL                    = string
-    LOG_LEVEL_NDELIUS                 = string
-    MERGE_API_URL                     = string
-    MERGE_OAUTH_URL                   = string
-    MERGE_URL                         = string
-    NDELIUS_CLIENT_ID                 = string
-    OAUTH_CALLBACK_URL                = string
-    OAUTH_CLIENT_ID                   = string
-    OAUTH_DEFAULT_SCOPE               = string
-    OAUTH_LOGIN_ENABLED               = string
-    OAUTH_LOGIN_NAME                  = string
-    OAUTH_TOKEN_VERIFICATION_URL      = string
-    OAUTH_URL                         = string
-    OFFENDER_SEARCH_API_URL           = string
-    PASSWORD_RESET_URL                = string
-    PDFCREATION_TEMPLATES             = string
-    PDFCREATION_URL                   = string
-    PREPARE_CASE_FOR_SENTENCE_URL     = string
-    PSR_SERVICE_URL                   = string
-    TRAINING_MODE_APP_NAME            = string
-    TZ                                = string
-    USERMANAGEMENT_URL                = string
-    USER_CONTEXT                      = string
-    USER_MEM_ARGS                     = string
-  })
+  type        = map()
+  description = "List of parameters"
 }
