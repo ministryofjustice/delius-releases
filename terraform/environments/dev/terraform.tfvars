@@ -2,7 +2,7 @@ vpc_id                 = "vpc-01d7a2da8f9f1dfec"
 long_environment_name  = "development"
 short_environment_name = "dev"
 weblogic_tg_name       = "dev-weblogic-9a8b"
-weblogic_eis_tg_name   = "dev-weblogic-eis-c821"
+weblogic_eis_tg_name   = "dev-weblogic-eis-5fe9"
 is_production          = false
 
 services = {
