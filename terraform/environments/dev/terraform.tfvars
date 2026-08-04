@@ -7,11 +7,11 @@ is_production          = false
 
 services = {
   weblogic = {
-    container_port                     = 8080
-    container_memory                   = 4096
-    container_cpu                      = 2048
-    task_count                         = 1
-    grace_period_seconds               = 480
+    container_port       = 8080
+    container_memory     = 4096
+    container_cpu        = 2048
+    task_count           = 1
+    grace_period_seconds = 480
   }
 
   weblogic-eis = {
