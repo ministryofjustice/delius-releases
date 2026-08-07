@@ -13,7 +13,6 @@ services = {
     task_count                         = 4
     grace_period_seconds               = 480
     deployment_minimum_healthy_percent = 50
-    deployment_maximum_percent         = 100
   }
 
   weblogic-eis = {

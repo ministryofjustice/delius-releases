@@ -7,11 +7,12 @@ is_production          = false
 
 services = {
   weblogic = {
-    container_port       = 8080
-    container_memory     = 4096
-    container_cpu        = 2048
-    task_count           = 2
-    grace_period_seconds = 480
+    container_port                     = 8080
+    container_memory                   = 4096
+    container_cpu                      = 2048
+    task_count                         = 2
+    grace_period_seconds               = 480
+    deployment_minimum_healthy_percent = 50
   }
 
   weblogic-eis = {
@@ -24,10 +25,10 @@ services = {
 }
 
 weblogic_params = {
-  API_CLIENT_ID                     = "delius-ui-client"
-  AWS_REGION                        = "eu-west-2"
-  COOKIE_SECURE                     = "true"
-  DEEPLINK_BASE_URL                 = "https://ndelius.stage.probation.service.justice.gov.uk/NDelius-war/delius/JSP/deeplink.xhtml"
+  API_CLIENT_ID     = "delius-ui-client"
+  AWS_REGION        = "eu-west-2"
+  COOKIE_SECURE     = "true"
+  DEEPLINK_BASE_URL = "https://ndelius.stage.probation.service.justice.gov.uk/NDelius-war/delius/JSP/deeplink.xhtml"
   # DELIUS_API_URL                    = "" #Possible Needed
   DMS_HOST                          = "hmpps-delius-alfresco-stage.apps.live.cloud-platform.service.justice.gov.uk"
   DMS_OFFICE_URI_HOST               = "hmpps-delius-alfresco-stage.apps.live.cloud-platform.service.justice.gov.uk"
