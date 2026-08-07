@@ -4,21 +4,21 @@ data "aws_region" "current" {}
 data "aws_subnet" "private_subnets_a" {
   vpc_id = var.vpc_id
   tags = {
-    "Name" = "hmpps-${var.long_environment_name}-general-private-${data.aws_region.current.region}a"
+    "Name" = "hmpps-${var.account_name}-general-private-${data.aws_region.current.region}a"
   }
 }
 
 data "aws_subnet" "private_subnets_b" {
   vpc_id = var.vpc_id
   tags = {
-    "Name" = "hmpps-${var.long_environment_name}-general-private-${data.aws_region.current.region}b"
+    "Name" = "hmpps-${var.account_name}-general-private-${data.aws_region.current.region}b"
   }
 }
 
 data "aws_subnet" "private_subnets_c" {
   vpc_id = var.vpc_id
   tags = {
-    "Name" = "hmpps-${var.long_environment_name}-general-private-${data.aws_region.current.region}c"
+    "Name" = "hmpps-${var.account_name}-general-private-${data.aws_region.current.region}c"
   }
 }
 

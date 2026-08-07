@@ -19,7 +19,7 @@ variable "vpc_id" {
   description = "The VPC ID where the ECS cluster is deployed"
 }
 
-variable "long_environment_name" {
+variable "account_name" {
   type        = string
   description = "The long name of the environment, e.g. development"
 }

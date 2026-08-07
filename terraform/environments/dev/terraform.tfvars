@@ -1,5 +1,5 @@
 vpc_id                 = "vpc-01d7a2da8f9f1dfec"
-long_environment_name  = "development"
+account_name           = "development"
 short_environment_name = "dev"
 weblogic_tg_name       = "dev-weblogic-9a8b"
 weblogic_eis_tg_name   = "dev-weblogic-eis-5fe9"
@@ -24,12 +24,11 @@ services = {
 }
 
 weblogic_params = {
-  API_CLIENT_ID               = "delius-ui-client"
-  AWS_REGION                  = "eu-west-2"
-  BREACH_NOTICE_API_URL       = "https://breach-notice-api-dev.hmpps.service.justice.gov.uk"
-  BREACH_NOTICE_UI_URL_FORMAT = "https://breach-notice-dev.hmpps.service.justice.gov.uk/breach-notice/%s"
-  COOKIE_SECURE               = "true"
-  # DELIUS_API_URL                    = "" # Possibly no longer needed
+  API_CLIENT_ID                     = "delius-ui-client"
+  AWS_REGION                        = "eu-west-2"
+  BREACH_NOTICE_API_URL             = "https://breach-notice-api-dev.hmpps.service.justice.gov.uk"
+  BREACH_NOTICE_UI_URL_FORMAT       = "https://breach-notice-dev.hmpps.service.justice.gov.uk/breach-notice/%s"
+  COOKIE_SECURE                     = "true"
   DMS_HOST                          = "hmpps-delius-alfresco-dev.apps.live.cloud-platform.service.justice.gov.uk"
   DMS_OFFICE_URI_HOST               = "hmpps-delius-alfresco-dev.apps.live.cloud-platform.service.justice.gov.uk"
   DMS_OFFICE_URI_PORT               = "443"
@@ -37,7 +36,7 @@ weblogic_params = {
   DMS_PROTOCOL                      = "https"
   EIS_USER_CONTEXT                  = "cn=EISUsers,ou=Users,dc=moj,dc=com"
   ELASTICSEARCH_URL                 = "https://probation-search-dev.hmpps.service.justice.gov.uk/delius"
-  GDPR_URL                          = "https://ndelius.mis-dev.probation.service.justice.gov.uk/gdpr/ui/homepage" # GDPR not deployed to CP yet, <URL>/gdpr/ui/homepage
+  GDPR_URL                          = "https://ndelius.mis-dev.probation.service.justice.gov.uk/gdpr/ui/homepage"
   JDBC_CONNECTION_POOL_MAX_CAPACITY = "100"
   JDBC_CONNECTION_POOL_MIN_CAPACITY = "50"
   JDBC_URL                          = "jdbc:oracle:thin:@(DESCRIPTION=(LOAD_BALANCE=OFF)(FAILOVER=ON)(CONNECT_TIMEOUT=10)(RETRY_COUNT=3)(ADDRESS_LIST=(ADDRESS=(PROTOCOL=tcp)(HOST=delius-core-dev-db-1.hmpps-development.modernisation-platform.internal)(PORT=1521))(ADDRESS=(PROTOCOL=tcp)(HOST=delius-core-dev-db-2.hmpps-development.modernisation-platform.internal)(PORT=1521))(ADDRESS=(PROTOCOL=tcp)(HOST=delius-core-dev-db-3.hmpps-development.modernisation-platform.internal)(PORT=1521)))(CONNECT_DATA=(SERVICE_NAME=DMDNDA_TAF)))"
