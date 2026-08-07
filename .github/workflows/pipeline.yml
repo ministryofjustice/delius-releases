@@ -103,11 +103,11 @@ jobs:
           disable-source-override: true
 
   stage:
-    uses: ./.github/workflows/deploy-mp.yml
+    uses: ./.github/workflows/deploy-mp-new.yml
     needs:
       - release
     with:
-      environment: delius-stage
+      environment: stage
       environment_url: https://ndelius.stage.probation.service.justice.gov.uk/
       version: ${{ github.event.head_commit.message }}
       rbac_version: ${{ needs.release.outputs.rbac_version }}
