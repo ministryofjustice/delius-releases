@@ -19,7 +19,7 @@ variable "vpc_id" {
   description = "The VPC ID where the ECS cluster is deployed"
 }
 
-variable "long_environment_name" {
+variable "account_name" {
   type        = string
   description = "The long name of the environment, e.g. development"
 }
@@ -52,7 +52,7 @@ variable "services" {
     task_count                         = number
     grace_period_seconds               = number
     deployment_minimum_healthy_percent = optional(number, 0)
-    deployment_maximum_percent         = optional(number, 200)
+    deployment_maximum_percent         = optional(number, 100)
   }))
 }
 

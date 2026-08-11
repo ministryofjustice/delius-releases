@@ -46,6 +46,7 @@ on:
         options:
           - dev
           - test
+          - stage
       
 jobs:
   deploy:

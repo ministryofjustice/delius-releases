@@ -1,5 +1,5 @@
 vpc_id                 = "vpc-0b327c73f2d0a27d2"
-long_environment_name  = "test"
+account_name           = "test"
 short_environment_name = "test"
 weblogic_tg_name       = "test-weblogic-ff35"
 weblogic_eis_tg_name   = "test-weblogic-eis-b8f8"
@@ -13,7 +13,6 @@ services = {
     task_count                         = 4
     grace_period_seconds               = 480
     deployment_minimum_healthy_percent = 50
-    deployment_maximum_percent         = 100
   }
 
   weblogic-eis = {
@@ -26,15 +25,14 @@ services = {
 }
 
 weblogic_params = {
-  API_CLIENT_ID               = "delius-ui-client"
-  AWS_REGION                  = "eu-west-2"
-  BREACH_NOTICE_API_URL       = "https://breach-notice-api-dev.hmpps.service.justice.gov.uk"
-  BREACH_NOTICE_UI_URL_FORMAT = "https://breach-notice-dev.hmpps.service.justice.gov.uk/breach-notice/%s"
-  COOKIE_SECURE               = "true"
-  COSSO_API_URL               = "https://cosso-api-dev.hmpps.service.justice.gov.uk/cosso"
-  COSSO_UI_URL_FORMAT         = "https://cosso-ui-dev.hmpps.service.justice.gov.uk/cosso/%s"
-  DEEPLINK_BASE_URL           = "https://ndelius.test.delius-core.hmpps-test.modernisation-platform.service.justice.gov.uk/NDelius-war/delius/JSP/deeplink.xhtml"
-  # DELIUS_API_URL                    = "" # Possibly no longer needed
+  API_CLIENT_ID                     = "delius-ui-client"
+  AWS_REGION                        = "eu-west-2"
+  BREACH_NOTICE_API_URL             = "https://breach-notice-api-dev.hmpps.service.justice.gov.uk"
+  BREACH_NOTICE_UI_URL_FORMAT       = "https://breach-notice-dev.hmpps.service.justice.gov.uk/breach-notice/%s"
+  COOKIE_SECURE                     = "true"
+  COSSO_API_URL                     = "https://cosso-api-dev.hmpps.service.justice.gov.uk/cosso"
+  COSSO_UI_URL_FORMAT               = "https://cosso-ui-dev.hmpps.service.justice.gov.uk/cosso/%s"
+  DEEPLINK_BASE_URL                 = "https://ndelius.test.delius-core.hmpps-test.modernisation-platform.service.justice.gov.uk/NDelius-war/delius/JSP/deeplink.xhtml"
   DMS_HOST                          = "hmpps-delius-alfresco-test.apps.live.cloud-platform.service.justice.gov.uk"
   DMS_OFFICE_URI_HOST               = "hmpps-delius-alfresco-test.apps.live.cloud-platform.service.justice.gov.uk"
   DMS_OFFICE_URI_PORT               = "443"
