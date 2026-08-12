@@ -52,7 +52,7 @@ variable "services" {
     task_count                         = number
     grace_period_seconds               = number
     deployment_minimum_healthy_percent = optional(number, 0)
-    deployment_maximum_percent         = optional(number, 100)
+    deployment_maximum_percent         = optional(number, 101)
   }))
 }
 
