@@ -155,7 +155,7 @@ jobs:
           fi
 
       - name: Stop Probation Integration updates
-        if: (inputs.environment == 'test' || inputs.environment == 'stage' || inputs.environment == 'preprod') && inputs.terraform_apply_only == false
+        if: (inputs.environment == 'test' || inputs.environment == 'preprod') && inputs.terraform_apply_only == false
         run: gh workflow run readonly.yml --repo 'ministryofjustice/hmpps-probation-integration-services' --field 'action=enable' --field "environment=${{ inputs.environment }}"
         env:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
