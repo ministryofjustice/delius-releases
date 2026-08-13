@@ -47,6 +47,7 @@ on:
           - dev
           - test
           - stage
+          - preprod
       
 jobs:
   deploy:

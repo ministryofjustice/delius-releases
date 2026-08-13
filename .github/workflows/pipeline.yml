@@ -137,14 +137,14 @@ jobs:
           DURATION: 3600 # 1 hour
 
   pre-prod:
-    uses: ./.github/workflows/deploy.yml
+    uses: ./.github/workflows/deploy-mp-new.yml
     needs:
       - release
       - test
 #      - serenity-tests
 #      - performance-tests
     with:
-      environment: delius-pre-prod
+      environment: preprod
       environment_url: https://ndelius.pre-prod.delius.probation.hmpps.dsd.io/
       version: ${{ github.event.head_commit.message }}
       rbac_version: ${{ needs.release.outputs.rbac_version }}
