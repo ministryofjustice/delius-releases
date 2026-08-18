@@ -1,4 +1,4 @@
-# This workflow is responsible for creating/destroying the NDelius maintenance banner on the Weblogic ALB
+# This workflow is responsible for creating/destroying the NDelius maintenance banner on the Weblogic ALB (Modernisation Platform)
 # It is usually run during NDelius deployments
 
 name: Create/Destroy Maintenance Banner
