@@ -1,0 +1,198 @@
+# This workflow is responsible for creating/destroying the NDelius maintenance banner on the Weblogic ALB
+# It is usually run during NDelius deployments
+
+name: Create/Destroy Maintenance Banner
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment
+        type: choice
+        required: true
+        options:
+          - dev
+          - test
+          - stage
+          - preprod
+
+      maintenance_mode:
+        description: "Enable or disable the maintenance banner"
+        required: true
+        type: choice
+        options:
+          - enable
+          - disable
+
+      banner_text:
+        description: "Maintenance banner text"
+        required: false
+        type: string
+        default: "Delius is down for maintenance"
+
+jobs:
+  manage-maintenance:
+    name: ${{ inputs.maintenance_mode == 'enable' && 'Enable' || 'Disable' }} maintenance mode
+    runs-on: ubuntu-latest
+
+    environment: ${{ inputs.environment }}
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: "arn:aws:iam::${{ vars.MP_ACCOUNT_ID }}:role/modernisation-platform-oidc-cicd"
+          role-session-name: "delius-releases-${{ github.run_number }}"
+          aws-region: "eu-west-2"
+
+      - name: Validate configuration
+        id: validate
+        env:
+          LISTENER_ARN: ${{ vars.HTTPS_LISTENER_ARN }}
+          BANNER_TEXT: ${{ inputs.banner_text }}
+        run: |
+          set -euo pipefail
+
+          LISTENER_ARN=$(
+            aws elbv2 describe-listeners \
+              --load-balancer-arn "$(
+                aws elbv2 describe-load-balancers \
+                  --names 'delius-core-${{ inputs.environment }}-weblogic-alb' \
+                  --query 'LoadBalancers[0].LoadBalancerArn' \
+                  --output text
+              )" \
+              --query 'Listeners[?Port==`443`].ListenerArn | [0]' \
+              --output text
+          )
+
+          if [[ "$LISTENER_ARN" == "None" || -z "$LISTENER_ARN" ]]; then
+            echo "::error::HTTPS_LISTENER_ARN is not configured for environment 'delius-core-${{ inputs.environment }}-weblogic-alb'"
+            exit 1
+          fi
+
+          if [[ "${{ inputs.maintenance_mode }}" == "enable" && -z "$BANNER_TEXT" ]]; then
+            echo "::error::The banner_text input is required when enabling maintenance mode."
+            exit 1
+          fi
+
+          echo "LISTENER_ARN=$LISTENER_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Find maintenance rule
+        id: maintenance-rule
+        env:
+          LISTENER_ARN: ${{ steps.validate.outputs.LISTENER_ARN }}
+        run: |
+          set -euo pipefail
+
+          RULE_ARNS=$(
+            aws elbv2 describe-rules \
+              --listener-arn "$LISTENER_ARN" \
+              --query 'Rules[?IsDefault==`false`].RuleArn' \
+              --output text
+          )
+
+          RULE_ARN=""
+
+          for ARN in $RULE_ARNS; do
+            NAME=$(
+              aws elbv2 describe-tags \
+                --resource-arns "$ARN" \
+                --query 'TagDescriptions[0].Tags[?Key==`Name`].Value | [0]' \
+                --output text
+            )
+
+            if [[ "$NAME" == "maintenance-banner" ]]; then
+              RULE_ARN="$ARN"
+              break
+            fi
+          done
+
+          if [[ -n "$RULE_ARN" ]]; then
+            echo "Maintenance rule found: $RULE_ARN"
+            echo "RULE_ARN=$RULE_ARN" >> "$GITHUB_OUTPUT"
+          else
+            echo "No maintenance rule found."
+            echo "RULE_ARN=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Enable maintenance mode
+        if: inputs.maintenance_mode == 'enable'
+        env:
+          LISTENER_ARN: ${{ steps.validate.outputs.LISTENER_ARN }}
+          RULE_ARN: ${{ steps.maintenance-rule.outputs.RULE_ARN }}
+          RESPONSE: ${{ inputs.banner_text }}
+        run: |
+          set -euo pipefail
+
+          ACTIONS=$(
+            jq -n \
+              --arg response "$RESPONSE" \
+              '[
+                {
+                  "Type": "fixed-response",
+                  "FixedResponseConfig": {
+                    "StatusCode": "200",
+                    "ContentType": "text/html",
+                    "MessageBody": $response
+                  }
+                }
+              ]'
+          )
+
+          if [[ -n "$RULE_ARN" ]]; then
+            echo "Updating existing maintenance rule: $RULE_ARN"
+
+            aws elbv2 modify-rule \
+              --rule-arn "$RULE_ARN" \
+              --actions "$ACTIONS"
+          else
+            echo "Creating maintenance rule..."
+
+            CONDITIONS='[
+              {
+                "Field": "path-pattern",
+                "PathPatternConfig": {
+                  "Values": ["/*"]
+                }
+              }
+            ]'
+
+            RULE_ARN=$(
+              aws elbv2 create-rule \
+                --listener-arn "$LISTENER_ARN" \
+                --priority 1 \
+                --conditions "$CONDITIONS" \
+                --actions "$ACTIONS" \
+                --query 'Rules[0].RuleArn' \
+                --output text
+            )
+
+            aws elbv2 add-tags \
+              --resource-arns "$RULE_ARN" \
+              --tags Key=Name,Value=maintenance-banner
+
+            echo "Created maintenance rule: $RULE_ARN"
+          fi
+
+      - name: Disable maintenance mode
+        if: inputs.maintenance_mode == 'disable'
+        env:
+          RULE_ARN: ${{ steps.maintenance-rule.outputs.RULE_ARN }}
+        run: |
+          set -euo pipefail
+
+          if [[ -n "$RULE_ARN" ]]; then
+            echo "Deleting maintenance rule: $RULE_ARN"
+
+            aws elbv2 delete-rule \
+              --rule-arn "$RULE_ARN"
+
+            echo "Maintenance mode disabled."
+          else
+            echo "No maintenance rule found. Nothing to disable."
+          fi
+
