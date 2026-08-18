@@ -34,13 +34,10 @@ jobs:
   manage-maintenance:
     name: ${{ inputs.maintenance_mode == 'enable' && 'Enable' || 'Disable' }} maintenance mode
     runs-on: ubuntu-latest
-
     environment: ${{ inputs.environment }}
-
     permissions:
       id-token: write
       contents: read
-
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
