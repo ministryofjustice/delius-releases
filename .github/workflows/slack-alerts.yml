@@ -1,0 +1,127 @@
+# This workflow is responsible for Enabling/Disabling Slack alerts for Delius core (Modernisation Platform)
+# It is usually run during NDelius deployments to prevent alerts from flooding the chennels
+# Alerts for the following apps will be afffected:
+#     - weblogic
+#     - weblogic-eis
+#     - pwd-manager
+#     - ldap
+
+name: Slack alerts
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Enable/Disable Slack alerts"
+        required: true
+        type: choice
+        options:
+          - enable
+          - disable
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-west-2
+
+jobs:
+  slack-alerts:
+    name: ${{ inputs.action == 'disable' && 'Disable' || 'Enable' }} Slack alerts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
+        with:
+          role-to-assume: "arn:aws:iam::${{ vars.MP_ACCOUNT_ID }}:role/modernisation-platform-oidc-cicd"
+          role-session-name: "delius-releases-${{ github.run_number }}"
+          aws-region: "eu-west-2"
+
+      - name: Find CloudWatch alarms
+        id: alarms
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Finding CloudWatch alarms where the 'app' tag is one of:"
+          echo "  weblogic"
+          echo "  weblogic-eis"
+          echo "  ldap"
+          echo "  pwd-manager"
+
+
+          ALARMS=$(
+            aws resourcegroupstaggingapi get-resources \
+              --region "$AWS_REGION" \
+              --resource-type-filters cloudwatch:alarm \
+              --tag-filters \
+                'Key=app,Values=weblogic,weblogic-eis,ldap,pwd-manager' \
+              --query 'ResourceTagMappingList[].ResourceARN' \
+              --output text |
+            tr '\t' '\n' |
+            sed 's/.*:alarm://'
+          )
+
+          if [ -z "$ALARMS" ]; then
+            echo "::error::No matching CloudWatch alarms found."
+            exit 1
+          fi
+
+          echo "Found the following alarms:"
+
+          while IFS= read -r alarm; do
+            [ -z "$alarm" ] && continue
+            echo "  $alarm"
+          done <<< "$ALARMS"
+
+          {
+            echo 'alarm_names<<EOF'
+            echo "$ALARMS"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Disable CloudWatch alarm actions
+        if: ${{ inputs.action == 'disable' }}
+        env:
+          ALARM_ARNS: ${{ steps.alarms.outputs.alarm_names }}
+        run: |
+          set -euo pipefail
+
+          echo "Disabling CloudWatch alarm actions..."
+
+          while IFS= read -r alarm; do
+            [ -z "$alarm" ] && continue
+
+            echo "Disabling: $alarm"
+
+            aws cloudwatch disable-alarm-actions \
+              --region "$AWS_REGION" \
+              --alarm-names "$alarm"
+
+          done <<< "$ALARM_NAMES"
+
+          echo "All matching CloudWatch alarm actions disabled."
+
+      - name: Enable CloudWatch alarm actions
+        if: ${{ inputs.action == 'enable' }}
+        env:
+          ALARM_ARNS: ${{ steps.alarms.outputs.alarm_arns }}
+        run: |
+          set -euo pipefail
+
+          echo "Enabling CloudWatch alarm actions..."
+
+          while IFS= read -r alarm; do
+            [ -z "$alarm" ] && continue
+
+            echo "Enabling: $alarm"
+
+            aws cloudwatch enable-alarm-actions \
+              --region "$AWS_REGION" \
+              --alarm-names "$alarm"
+
+          done <<< "$ALARM"
+
+          echo "All matching CloudWatch alarm actions enabled."
