@@ -110,7 +110,7 @@ jobs:
       - name: Enable CloudWatch alarm actions
         if: ${{ inputs.action == 'enable' }}
         env:
-          ALARM_ARNS: ${{ steps.alarms.outputs.alarm_arns }}
+          ALARM_NAMES: ${{ steps.alarms.outputs.alarm_names }}
         run: |
           set -euo pipefail
 
@@ -120,6 +120,6 @@ jobs:
             [ -z "$alarm" ] && continue
             echo "Enabling: $alarm"
             aws cloudwatch enable-alarm-actions --alarm-names "$alarm"
-          done <<< "$ALARM"
+          done <<< "$ALARM_NAMES"
 
           echo "All matching CloudWatch alarm actions enabled."
