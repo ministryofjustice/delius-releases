@@ -16,7 +16,7 @@ services = {
 
   weblogic-eis = {
     container_port       = 8080
-    container_memory     = 2048
+    container_memory     = 4096
     container_cpu        = 1024
     task_count           = 1
     grace_period_seconds = 600
