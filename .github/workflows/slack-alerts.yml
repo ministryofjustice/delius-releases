@@ -11,6 +11,16 @@ name: Slack alerts
 on:
   workflow_dispatch:
     inputs:
+      environment:
+        description: Environment
+        type: choice
+        required: true
+        options:
+          - dev
+          - test
+          - stage
+          - preprod
+
       action:
         description: "Enable/Disable Slack alerts"
         required: true
@@ -22,9 +32,6 @@ on:
 permissions:
   id-token: write
   contents: read
-
-env:
-  AWS_REGION: eu-west-2
 
 jobs:
   slack-alerts:
@@ -51,10 +58,8 @@ jobs:
           echo "  ldap"
           echo "  pwd-manager"
 
-
           ALARMS=$(
             aws resourcegroupstaggingapi get-resources \
-              --region "$AWS_REGION" \
               --resource-type-filters cloudwatch:alarm \
               --tag-filters \
                 'Key=app,Values=weblogic,weblogic-eis,ldap,pwd-manager' \
@@ -93,13 +98,8 @@ jobs:
 
           while IFS= read -r alarm; do
             [ -z "$alarm" ] && continue
-
             echo "Disabling: $alarm"
-
-            aws cloudwatch disable-alarm-actions \
-              --region "$AWS_REGION" \
-              --alarm-names "$alarm"
-
+            aws cloudwatch disable-alarm-actions --alarm-names "$alarm"
           done <<< "$ALARM_NAMES"
 
           echo "All matching CloudWatch alarm actions disabled."
@@ -115,13 +115,8 @@ jobs:
 
           while IFS= read -r alarm; do
             [ -z "$alarm" ] && continue
-
             echo "Enabling: $alarm"
-
-            aws cloudwatch enable-alarm-actions \
-              --region "$AWS_REGION" \
-              --alarm-names "$alarm"
-
+            aws cloudwatch enable-alarm-actions --alarm-names "$alarm"
           done <<< "$ALARM"
 
           echo "All matching CloudWatch alarm actions enabled."
