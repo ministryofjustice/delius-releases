@@ -93,7 +93,7 @@ jobs:
       - name: Disable CloudWatch alarm actions
         if: ${{ inputs.action == 'disable' }}
         env:
-          ALARM_ARNS: ${{ steps.alarms.outputs.alarm_names }}
+          ALARM_NAMES: ${{ steps.alarms.outputs.alarm_names }}
         run: |
           set -euo pipefail
 
