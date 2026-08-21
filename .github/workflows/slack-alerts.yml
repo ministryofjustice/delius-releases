@@ -11,6 +11,16 @@ name: Slack alerts
 on:
   workflow_dispatch:
     inputs:
+      environment:
+        description: Environment
+        type: choice
+        required: true
+        options:
+          - dev
+          - test
+          - stage
+          - preprod
+
       action:
         description: "Enable/Disable Slack alerts"
         required: true
@@ -23,14 +33,14 @@ permissions:
   id-token: write
   contents: read
 
-env:
-  AWS_REGION: eu-west-2
-
 jobs:
   slack-alerts:
     name: ${{ inputs.action == 'disable' && 'Disable' || 'Enable' }} Slack alerts
     runs-on: ubuntu-latest
-
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6.1.0
@@ -51,10 +61,8 @@ jobs:
           echo "  ldap"
           echo "  pwd-manager"
 
-
           ALARMS=$(
             aws resourcegroupstaggingapi get-resources \
-              --region "$AWS_REGION" \
               --resource-type-filters cloudwatch:alarm \
               --tag-filters \
                 'Key=app,Values=weblogic,weblogic-eis,ldap,pwd-manager' \
@@ -85,7 +93,7 @@ jobs:
       - name: Disable CloudWatch alarm actions
         if: ${{ inputs.action == 'disable' }}
         env:
-          ALARM_ARNS: ${{ steps.alarms.outputs.alarm_names }}
+          ALARM_NAMES: ${{ steps.alarms.outputs.alarm_names }}
         run: |
           set -euo pipefail
 
@@ -93,13 +101,8 @@ jobs:
 
           while IFS= read -r alarm; do
             [ -z "$alarm" ] && continue
-
             echo "Disabling: $alarm"
-
-            aws cloudwatch disable-alarm-actions \
-              --region "$AWS_REGION" \
-              --alarm-names "$alarm"
-
+            aws cloudwatch disable-alarm-actions --alarm-names "$alarm"
           done <<< "$ALARM_NAMES"
 
           echo "All matching CloudWatch alarm actions disabled."
@@ -107,7 +110,7 @@ jobs:
       - name: Enable CloudWatch alarm actions
         if: ${{ inputs.action == 'enable' }}
         env:
-          ALARM_ARNS: ${{ steps.alarms.outputs.alarm_arns }}
+          ALARM_NAMES: ${{ steps.alarms.outputs.alarm_names }}
         run: |
           set -euo pipefail
 
@@ -115,13 +118,8 @@ jobs:
 
           while IFS= read -r alarm; do
             [ -z "$alarm" ] && continue
-
             echo "Enabling: $alarm"
-
-            aws cloudwatch enable-alarm-actions \
-              --region "$AWS_REGION" \
-              --alarm-names "$alarm"
-
-          done <<< "$ALARM"
+            aws cloudwatch enable-alarm-actions --alarm-names "$alarm"
+          done <<< "$ALARM_NAMES"
 
           echo "All matching CloudWatch alarm actions enabled."
