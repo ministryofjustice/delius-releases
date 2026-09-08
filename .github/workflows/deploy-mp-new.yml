@@ -206,15 +206,16 @@ jobs:
           echo 'terraform apply -var-file="environments/${{ inputs.environment }}/terraform.tfvars" -var="weblogic_image_tag=${{ env.WEBLOGIC_IMAGE_TAG }}" -var="weblogic_eis_image_tag=${{ env.WEBLOGIC_EIS_IMAGE_TAG }}" $tfargs'
           terraform apply -var-file="environments/${{ inputs.environment }}/terraform.tfvars" -var="weblogic_image_tag=${{ env.WEBLOGIC_IMAGE_TAG }}" -var="weblogic_eis_image_tag=${{ env.WEBLOGIC_EIS_IMAGE_TAG }}" $tfargs
 
-      - name: Update configuration
-        id: config
-        shell: bash
-        run: ./.github/workflows/update-env-config.sh
-        env:
-          environment: ${{ steps.set_env_names.outputs.hmpps_env_name }}
-          rbac_version: ${{ inputs.rbac_version }}
-          version: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
-          token: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+      # Temporarily Disable
+      # - name: Update configuration
+      #   id: config
+      #   shell: bash
+      #   run: ./.github/workflows/update-env-config.sh
+      #   env:
+      #     environment: ${{ steps.set_env_names.outputs.hmpps_env_name }}
+      #     rbac_version: ${{ inputs.rbac_version }}
+      #     version: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
+      #     token: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
 
       - name: Uplift RBAC in modernisation platform
         id: uplift_rbac

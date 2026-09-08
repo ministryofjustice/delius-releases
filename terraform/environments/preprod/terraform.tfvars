@@ -59,8 +59,12 @@ weblogic_params = {
   OFFENDER_SEARCH_API_URL           = "https://probation-offender-search-preprod.hmpps.service.justice.gov.uk"
   PASSWORD_RESET_URL                = "https://pwm.preprod.delius-core.hmpps-test.modernisation-platform.service.justice.gov.uk/public/forgottenpassword"
   PDFCREATION_TEMPLATES             = "shortFormatPreSentenceReport|paroleParom1Report|oralReport"
-  PDFCREATION_URL                   = "https://ndelius-new-tech-pdf-generator-preprod.hmpps.service.justice.gov.uk/newTech"
+  PDFCREATION_URL                   = "https://ndelius-new-tech-preprod.hmpps.service.justice.gov.uk/newTech"
   PREPARE_CASE_FOR_SENTENCE_URL     = "https://prepare-a-case-preprod.apps.live-1.cloud-platform.service.justice.gov.uk"
+  PSR_SERVICE_URL                   = "https://pre-sentence-service-preprod.hmpps.service.justice.gov.uk/api/v1/report"
+  PSR_UI_URL_FORMAT                 = "https://pre-sentence-service-preprod.hmpps.service.justice.gov.uk/psr/%s"
+  SUICIDE_RISK_API_URL              = "https://suicide-risk-form-api-preprod.hmpps.service.justice.gov.uk"
+  SUICIDE_RISK_UI_URL_FORMAT        = "https://suicide-risk-form-preprod.hmpps.service.justice.gov.uk/suicide-risk/%s"
   TZ                                = "Europe/London"
   USERMANAGEMENT_URL                = "https://delius-user-management-preprod.hmpps.service.justice.gov.uk/umt/" # Not resolving yet
   USER_CONTEXT                      = "ou=Users,dc=moj,dc=com"
