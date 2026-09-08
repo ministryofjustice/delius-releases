@@ -25,11 +25,10 @@ services = {
 }
 
 weblogic_params = {
-  API_CLIENT_ID     = "delius-ui-client"
-  AWS_REGION        = "eu-west-2"
-  COOKIE_SECURE     = "true"
-  DEEPLINK_BASE_URL = "https://ndelius.stage.probation.service.justice.gov.uk/NDelius-war/delius/JSP/deeplink.xhtml"
-  # DELIUS_API_URL                    = "" #Possibly Needed
+  API_CLIENT_ID                     = "delius-ui-client"
+  AWS_REGION                        = "eu-west-2"
+  COOKIE_SECURE                     = "true"
+  DEEPLINK_BASE_URL                 = "https://ndelius.stage.probation.service.justice.gov.uk/NDelius-war/delius/JSP/deeplink.xhtml"
   DMS_HOST                          = "hmpps-delius-alfresco-stage.apps.live.cloud-platform.service.justice.gov.uk"
   DMS_OFFICE_URI_HOST               = "hmpps-delius-alfresco-stage.apps.live.cloud-platform.service.justice.gov.uk"
   DMS_OFFICE_URI_PORT               = "443"

@@ -10,13 +10,13 @@ services = {
     container_port       = 8080
     container_memory     = 16384
     container_cpu        = 1024
-    task_count           = 2
+    task_count           = 20
     grace_period_seconds = 480
   }
 
   weblogic-eis = {
     container_port       = 8080
-    container_memory     = 16384
+    container_memory     = 8192
     container_cpu        = 1024
     task_count           = 2
     grace_period_seconds = 600
@@ -45,9 +45,9 @@ weblogic_params = {
   LDAP_HOST                         = "ldap.preprod.delius-core.hmpps-preproduction.modernisation-platform.service.justice.gov.uk"
   LDAP_PRINCIPAL                    = "cn=admin,dc=moj,dc=com"
   LOG_LEVEL_NDELIUS                 = "DEBUG"
-  MERGE_API_URL                     = "https://delius-merge-api-preprod.hmpps.service.justice.gov.uk" # Not resolving yet
+  MERGE_API_URL                     = "https://delius-merge-api-preprod.hmpps.service.justice.gov.uk"                  # Not resolving yet
   MERGE_OAUTH_URL                   = "https://delius-user-management-preprod.hmpps.service.justice.gov.uk/umt/oauth/" # Not resolving yet
-  MERGE_URL                         = "https://delius-merge-ui-preprod.hmpps.service.justice.gov.uk" # Not resolving yet
+  MERGE_URL                         = "https://delius-merge-ui-preprod.hmpps.service.justice.gov.uk"                   # Not resolving yet
   NDELIUS_CLIENT_ID                 = "NDelius"
   OAUTH_CALLBACK_URL                = "https://ndelius.preprod.delius-core.hmpps-test.modernisation-platform.service.justice.gov.uk/NDelius-war/delius/JSP/auth/token.jsp" # Not resolving yet
   OAUTH_CLIENT_ID                   = "delius-ui"
