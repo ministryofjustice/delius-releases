@@ -46,7 +46,7 @@ weblogic_params = {
   LDAP_PRINCIPAL                    = "cn=admin,dc=moj,dc=com"
   LOG_LEVEL_NDELIUS                 = "DEBUG"
   MERGE_API_URL                     = "https://delius-merge-api-preprod.hmpps.service.justice.gov.uk"
-  MERGE_OAUTH_URL                   = "https://delius-user-management-preprod.hmpps.service.justice.gov.uk/umt/oauth/"
+  MERGE_OAUTH_URL                   = "https://delius-user-management-preprod.hmpps.service.justice.gov.uk/umt/"
   MERGE_URL                         = "https://delius-merge-ui-preprod.hmpps.service.justice.gov.uk"
   NDELIUS_CLIENT_ID                 = "NDelius"
   OAUTH_CALLBACK_URL                = "https://ndelius.preprod.delius-core.hmpps-test.modernisation-platform.service.justice.gov.uk/NDelius-war/delius/JSP/auth/token.jsp" # Not resolving yet
