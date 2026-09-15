@@ -1,0 +1,1 @@
+bucket = "delius-core-preprod-weblogic-ecs-remote-state"
