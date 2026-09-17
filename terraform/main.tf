@@ -32,11 +32,11 @@ module "container_definition" {
     }
   ]
 
-  mount_points = [{
-    sourceVolume  = "access_log"
-    containerPath = "/u01/domains/NDelius/servers/AdminServer/logs"
-    readOnly      = false
-  }]
+  # mount_points = [{
+  #   sourceVolume  = "access_log"
+  #   containerPath = "/u01/domains/NDelius/servers/AdminServer/logs"
+  #   readOnly      = false
+  # }]
 
   log_configuration = {
     logDriver = "awslogs"
@@ -143,21 +143,6 @@ module "ecs_service" {
 
     efs_volume_configuration = []
   }]
-
-  # efs_volumes = [{
-  #   name                     = "access_log"
-  #   efs_volume_configuration = [{
-  #     file_system_id          = string
-  #     root_directory          = string
-  #     transit_encryption      = string
-  #     transit_encryption_port = string
-  #     authorization_config = list(object({
-  #       access_point_id = string
-  #       iam             = string
-  #     }))
-  #   }]
-  #   host_path                = ""
-  # }]
 
   enable_execute_command = true
 
