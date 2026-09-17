@@ -32,6 +32,48 @@ module "container_definition" {
     }
   ]
 
+  mount_points = [{
+    sourceVolume  = "access_log"
+    containerPath = "/u01/domains/NDelius/servers/AdminServer/logs"
+    readOnly      = false
+  }]
+
+  log_configuration = {
+    logDriver = "awslogs"
+    options = {
+      "awslogs-create-group"  = "true"
+      "awslogs-group"         = "${local.env_name}-${each.key}"
+      "awslogs-region"        = "${data.aws_region.current.region}"
+      "awslogs-stream-prefix" = "${local.env_name}-${each.key}"
+    }
+  }
+}
+
+module "access_logs" {
+  for_each = var.services
+
+  source                   = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//container?ref=v5.0.0"
+  name                     = "access_log"
+  image                    = "public.ecr.aws/amazonlinux/amazonlinux:2"
+  cpu                      = 0
+  essential                = true
+  environment              = []
+  secrets                  = []
+  port_mappings            = []
+  readonly_root_filesystem = false
+
+  command = [
+    "/bin/sh",
+    "-c",
+    "while [ ! -f '/u01/domains/NDelius/servers/AdminServer/logs/access.log' ]; do sleep 1; done && tail -n+1 -F '/u01/domains/NDelius/servers/AdminServer/logs/access.log'"
+  ]
+
+  mount_points = [{
+    sourceVolume  = "access_log"
+    containerPath = "/u01/domains/NDelius/servers/AdminServer/logs"
+    readOnly      = true
+  }]
+
   log_configuration = {
     logDriver = "awslogs"
     options = {
@@ -46,10 +88,13 @@ module "container_definition" {
 module "ecs_service" {
   for_each = var.services
 
-  source                = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//service?ref=v6.0.2"
-  container_definitions = nonsensitive(module.container_definition[each.key].json_encoded_list)
-  cluster_arn           = data.aws_ecs_cluster.ecs.arn
-  name                  = "${var.short_environment_name}-${each.key}"
+  source = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//service?ref=v6.0.2"
+  container_definitions = jsonencode(concat(
+    jsondecode(nonsensitive(module.container_definition[each.key].json_encoded_list)),
+    jsondecode(nonsensitive(module.access_logs[each.key].json_encoded_list))
+  ))
+  cluster_arn = data.aws_ecs_cluster.ecs.arn
+  name        = "${var.short_environment_name}-${each.key}"
 
   task_cpu    = each.value.container_cpu
   task_memory = each.value.container_memory
@@ -86,6 +131,28 @@ module "ecs_service" {
     data.aws_subnet.private_subnets_b.id,
     data.aws_subnet.private_subnets_c.id
   ]
+
+  efs_volumes = [{
+    name      = "access_log"
+    host_path = null
+
+    efs_volume_configuration = []
+  }]
+
+  # efs_volumes = [{
+  #   name                     = "access_log"
+  #   efs_volume_configuration = [{
+  #     file_system_id          = string
+  #     root_directory          = string
+  #     transit_encryption      = string
+  #     transit_encryption_port = string
+  #     authorization_config = list(object({
+  #       access_point_id = string
+  #       iam             = string
+  #     }))
+  #   }]
+  #   host_path                = ""
+  # }]
 
   enable_execute_command = true
 
