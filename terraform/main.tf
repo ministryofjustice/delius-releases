@@ -52,7 +52,7 @@ module "container_definition" {
 module "access_logs" {
   for_each = var.services
 
-  source                   = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//container?ref=v5.0.0"
+  source                   = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//container?ref=add-dependsOn-var"
   name                     = "access_log"
   image                    = "public.ecr.aws/amazonlinux/amazonlinux:2"
   cpu                      = 0
@@ -83,6 +83,11 @@ module "access_logs" {
       "awslogs-stream-prefix" = "${local.env_name}-${each.key}"
     }
   }
+
+  container_dependencies = [{
+      containerName = each.key
+      condition     = "START"
+  }]
 }
 
 module "ecs_service" {
