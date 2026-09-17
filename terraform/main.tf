@@ -32,11 +32,11 @@ module "container_definition" {
     }
   ]
 
-  # mount_points = [{
-  #   sourceVolume  = "access_log"
-  #   containerPath = "/u01/domains/NDelius/servers/AdminServer/logs"
-  #   readOnly      = false
-  # }]
+  mount_points = [{
+    sourceVolume  = "access_log"
+    containerPath = "/u01/domains/NDelius/servers/AdminServer/logs"
+    readOnly      = null
+  }]
 
   log_configuration = {
     logDriver = "awslogs"
