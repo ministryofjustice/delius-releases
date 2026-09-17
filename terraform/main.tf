@@ -80,7 +80,7 @@ module "access_logs" {
     logDriver = "awslogs"
     options = {
       "awslogs-create-group"  = "true"
-      "awslogs-group"         = "${local.env_name}-${each.key}"
+      "awslogs-group"         = "${local.env_name}-${each.key}-access-logs"
       "awslogs-region"        = "${data.aws_region.current.region}"
       "awslogs-stream-prefix" = "${local.env_name}-${each.key}"
     }
