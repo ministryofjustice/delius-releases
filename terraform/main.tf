@@ -8,13 +8,14 @@ locals {
 module "container_definition" {
   for_each = var.services
 
-  source                   = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//container?ref=v5.0.0"
+  source                   = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//container?ref=add-dependsOn-var"
   name                     = each.key
   image                    = "374269020027.dkr.ecr.eu-west-2.amazonaws.com/delius-core-weblogic:${local.image_tags[each.key]}"
   memory                   = each.value.container_memory
   cpu                      = each.value.container_cpu
   essential                = true
   readonly_root_filesystem = false
+  container_user           = "root"
 
   environment = [
     for k, v in var.weblogic_params : {
@@ -35,7 +36,7 @@ module "container_definition" {
   mount_points = [{
     sourceVolume  = "access_log"
     containerPath = "/u01/domains/NDelius/servers/AdminServer/logs"
-    readOnly      = null
+    readOnly      = false
   }]
 
   log_configuration = {
@@ -61,6 +62,7 @@ module "access_logs" {
   secrets                  = []
   port_mappings            = []
   readonly_root_filesystem = false
+  container_user           = "root"
 
   command = [
     "/bin/sh",
@@ -85,8 +87,8 @@ module "access_logs" {
   }
 
   container_dependencies = [{
-      containerName = each.key
-      condition     = "START"
+    containerName = each.key
+    condition     = "START"
   }]
 }
 
