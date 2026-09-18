@@ -95,13 +95,14 @@ module "access_logs" {
 module "ecs_service" {
   for_each = var.services
 
-  source = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//service?ref=v6.0.2"
+  source      = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//service?ref=v6.0.2"
+  name        = "${var.short_environment_name}-${each.key}"
+  cluster_arn = data.aws_ecs_cluster.ecs.arn
+
   container_definitions = jsonencode(concat(
     jsondecode(nonsensitive(module.container_definition[each.key].json_encoded_list)),
     jsondecode(nonsensitive(module.access_logs[each.key].json_encoded_list))
   ))
-  cluster_arn = data.aws_ecs_cluster.ecs.arn
-  name        = "${var.short_environment_name}-${each.key}"
 
   task_cpu    = each.value.container_cpu
   task_memory = each.value.container_memory
