@@ -8,13 +8,14 @@ locals {
 module "container_definition" {
   for_each = var.services
 
-  source                   = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//container?ref=v5.0.0"
+  source                   = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//container?ref=v6.1.0"
   name                     = each.key
   image                    = "374269020027.dkr.ecr.eu-west-2.amazonaws.com/delius-core-weblogic:${local.image_tags[each.key]}"
   memory                   = each.value.container_memory
   cpu                      = each.value.container_cpu
   essential                = true
   readonly_root_filesystem = false
+  container_user           = "root"
 
   environment = [
     for k, v in var.weblogic_params : {
@@ -32,6 +33,12 @@ module "container_definition" {
     }
   ]
 
+  mount_points = [{
+    sourceVolume  = "access_log"
+    containerPath = "/u01/domains/NDelius/servers/AdminServer/logs"
+    readOnly      = false
+  }]
+
   log_configuration = {
     logDriver = "awslogs"
     options = {
@@ -43,13 +50,59 @@ module "container_definition" {
   }
 }
 
+module "access_logs" {
+  for_each = var.services
+
+  source                   = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//container?ref=v6.1.0"
+  name                     = "access_log"
+  image                    = "public.ecr.aws/amazonlinux/amazonlinux:2"
+  cpu                      = 0
+  essential                = true
+  environment              = []
+  secrets                  = []
+  port_mappings            = []
+  readonly_root_filesystem = false
+  container_user           = "root"
+
+  command = [
+    "/bin/sh",
+    "-c",
+    "while [ ! -f '/u01/domains/NDelius/servers/AdminServer/logs/access.log' ]; do sleep 1; done && tail -n+1 -F '/u01/domains/NDelius/servers/AdminServer/logs/access.log'"
+  ]
+
+  mount_points = [{
+    sourceVolume  = "access_log"
+    containerPath = "/u01/domains/NDelius/servers/AdminServer/logs"
+    readOnly      = true
+  }]
+
+  log_configuration = {
+    logDriver = "awslogs"
+    options = {
+      "awslogs-create-group"  = "true"
+      "awslogs-group"         = "${local.env_name}-${each.key}-access-logs"
+      "awslogs-region"        = "${data.aws_region.current.region}"
+      "awslogs-stream-prefix" = "${local.env_name}-${each.key}"
+    }
+  }
+
+  container_dependencies = [{
+    containerName = each.key
+    condition     = "START"
+  }]
+}
+
 module "ecs_service" {
   for_each = var.services
 
-  source                = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//service?ref=v6.0.2"
-  container_definitions = nonsensitive(module.container_definition[each.key].json_encoded_list)
-  cluster_arn           = data.aws_ecs_cluster.ecs.arn
-  name                  = "${var.short_environment_name}-${each.key}"
+  source      = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//service?ref=v6.0.2"
+  name        = "${var.short_environment_name}-${each.key}"
+  cluster_arn = data.aws_ecs_cluster.ecs.arn
+
+  container_definitions = jsonencode(concat(
+    jsondecode(nonsensitive(module.container_definition[each.key].json_encoded_list)),
+    jsondecode(nonsensitive(module.access_logs[each.key].json_encoded_list))
+  ))
 
   task_cpu    = each.value.container_cpu
   task_memory = each.value.container_memory
@@ -86,6 +139,13 @@ module "ecs_service" {
     data.aws_subnet.private_subnets_b.id,
     data.aws_subnet.private_subnets_c.id
   ]
+
+  efs_volumes = [{
+    name      = "access_log"
+    host_path = null
+
+    efs_volume_configuration = []
+  }]
 
   enable_execute_command = true
 
