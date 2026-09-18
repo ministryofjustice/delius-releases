@@ -8,7 +8,7 @@ locals {
 module "container_definition" {
   for_each = var.services
 
-  source                   = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//container?ref=add-dependsOn-var"
+  source                   = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//container?ref=v6.1.0"
   name                     = each.key
   image                    = "374269020027.dkr.ecr.eu-west-2.amazonaws.com/delius-core-weblogic:${local.image_tags[each.key]}"
   memory                   = each.value.container_memory
@@ -53,7 +53,7 @@ module "container_definition" {
 module "access_logs" {
   for_each = var.services
 
-  source                   = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//container?ref=add-dependsOn-var"
+  source                   = "git::https://github.com/ministryofjustice/modernisation-platform-terraform-ecs-cluster//container?ref=v6.1.0"
   name                     = "access_log"
   image                    = "public.ecr.aws/amazonlinux/amazonlinux:2"
   cpu                      = 0
