@@ -1,8 +1,11 @@
 locals {
-  image_tags = {
-    weblogic     = var.weblogic_image_tag
-    weblogic-eis = var.weblogic_eis_image_tag
-  }
+  image_tags = merge(
+    {
+      weblogic     = var.weblogic_image_tag
+      weblogic-eis = var.weblogic_eis_image_tag
+    },
+    var.short_environment_name == "test" ? { weblogic-data = "5.8.12.6-testdata-api" } : {}
+  )
 }
 
 module "container_definition" {
