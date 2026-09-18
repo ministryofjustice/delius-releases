@@ -21,6 +21,14 @@ services = {
     task_count           = 1
     grace_period_seconds = 600
   }
+
+  weblogic-data = {
+    container_port       = 8080
+    container_memory     = 4096
+    container_cpu        = 1024
+    task_count           = 1
+    grace_period_seconds = 600
+  }
 }
 
 weblogic_params = {

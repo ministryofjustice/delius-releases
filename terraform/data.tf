@@ -27,10 +27,13 @@ data "aws_ecs_cluster" "ecs" {
 }
 
 locals {
-  target_group_names = {
-    weblogic     = var.weblogic_tg_name
-    weblogic-eis = var.weblogic_eis_tg_name
-  }
+  target_group_names = merge(
+    {
+      weblogic     = var.weblogic_tg_name
+      weblogic-eis = var.weblogic_eis_tg_name
+    },
+    var.short_environment_name == "test" ? { weblogic-data = "test-weblogic-data-f389" } : {}
+  )
 }
 
 data "aws_lb_target_group" "alb" {
