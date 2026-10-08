@@ -20,6 +20,7 @@ on:
           - test
           - stage
           - preprod
+          - prod
 
       action:
         description: "Enable/Disable Slack alerts"
