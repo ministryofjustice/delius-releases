@@ -29,6 +29,8 @@ weblogic_params = {
   BREACH_NOTICE_API_URL             = "https://breach-notice-api.hmpps.service.justice.gov.uk"
   BREACH_NOTICE_UI_URL_FORMAT       = "https://breach-notice.hmpps.service.justice.gov.uk/breach-notice/%s"
   COOKIE_SECURE                     = "true"
+  COSSO_API_URL                     = "https://cosso-api-prod.hmpps.service.justice.gov.uk/cosso"
+  COSSO_UI_URL_FORMAT               = "https://cosso-ui-prod.hmpps.service.justice.gov.uk/cosso/%s" 
   DEEPLINK_BASE_URL                 = "https://ndelius.probation.service.justice.gov.uk/NDelius-war/delius/JSP/deeplink.xhtml"
   DMS_HOST                          = "hmpps-delius-alfresco-prod.apps.live.cloud-platform.service.justice.gov.uk"
   DMS_OFFICE_URI_HOST               = "hmpps-delius-alfresco-prod.apps.live.cloud-platform.service.justice.gov.uk"
@@ -37,7 +39,7 @@ weblogic_params = {
   DMS_PROTOCOL                      = "https"
   EIS_USER_CONTEXT                  = "cn=EISUsers,ou=Users,dc=moj,dc=com"
   ELASTICSEARCH_URL                 = "https://probation-search.hmpps.service.justice.gov.uk/delius"
-  GDPR_URL                          = "https://delius-gdpr-ui-prod.hmpps.service.justice.gov.uk/gdpr/ui/" # Not Deployed
+  GDPR_URL                          = "https://delius-gdpr-ui.hmpps.service.justice.gov.uk/gdpr/ui/"
   JDBC_CONNECTION_POOL_MAX_CAPACITY = "40"
   JDBC_CONNECTION_POOL_MIN_CAPACITY = "20"
   JDBC_URL                          = "jdbc:oracle:thin:@(DESCRIPTION=(LOAD_BALANCE=OFF)(FAILOVER=ON)(CONNECT_TIMEOUT=10)(RETRY_COUNT=3)(ADDRESS_LIST=(ADDRESS=(PROTOCOL=tcp)(HOST=delius-core-prod-db-1.hmpps-production.modernisation-platform.internal)(PORT=1521))(ADDRESS=(PROTOCOL=tcp)(HOST=delius-core-prod-db-1.hmpps-production.modernisation-platform.internal)(PORT=1521))(ADDRESS=(PROTOCOL=tcp)(HOST=delius-core-prod-db-1.hmpps-production.modernisation-platform.internal)(PORT=1521)))(CONNECT_DATA=(SERVICE_NAME=PRDNDA_TAF)))"
@@ -45,9 +47,9 @@ weblogic_params = {
   LDAP_HOST                         = "ldap.prod.delius-core.hmpps-production.modernisation-platform.service.justice.gov.uk"
   LDAP_PRINCIPAL                    = "cn=admin,dc=moj,dc=com"
   LOG_LEVEL_NDELIUS                 = "INFO"
-  MERGE_API_URL                     = "https://delius-merge-api-prod.hmpps.service.justice.gov.uk/merge/api/" # Not Deployed
-  MERGE_OAUTH_URL                   = "https://delius-user-management-prod.hmpps.service.justice.gov.uk/umt/" # Not Deployed
-  MERGE_URL                         = "https://delius-merge-ui-prod.hmpps.service.justice.gov.uk/merge/ui/" # Not Deployed
+  MERGE_API_URL                     = "https://delius-merge-api.hmpps.service.justice.gov.uk/merge/api/"
+  MERGE_OAUTH_URL                   = "https://delius-user-management.hmpps.service.justice.gov.uk/umt/"
+  MERGE_URL                         = "https://delius-merge-ui.hmpps.service.justice.gov.uk/merge/ui/"
   NDELIUS_CLIENT_ID                 = "NDelius"
   OAUTH_CALLBACK_URL                = "https://ndelius.probation.service.justice.gov.uk/NDelius-war/delius/JSP/auth/token.jsp"
   OAUTH_CLIENT_ID                   = "delius-ui"
@@ -60,13 +62,13 @@ weblogic_params = {
   PASSWORD_RESET_URL                = "https://pwm.prod.delius-core.hmpps-production.modernisation-platform.service.justice.gov.uk/public/forgottenpassword"
   PDFCREATION_TEMPLATES             = "shortFormatPreSentenceReport|paroleParom1Report|oralReport"
   PDFCREATION_URL                   = "https://ndelius-new-tech.hmpps.service.justice.gov.uk/newTech"
-  PREPARE_CASE_FOR_SENTENCE_URL     = "https://prepare-a-case-prod.apps.live-1.cloud-platform.service.justice.gov.uk/"
+  PREPARE_CASE_FOR_SENTENCE_URL     = "https://prepare-case-probation.service.justice.gov.uk/"
   PSR_SERVICE_URL                   = "https://pre-sentence-service.hmpps.service.justice.gov.uk/api/v1/report"
   PSR_UI_URL_FORMAT                 = "https://pre-sentence-service.hmpps.service.justice.gov.uk/psr/%s"
   SUICIDE_RISK_API_URL              = "https://suicide-risk-form-api.hmpps.service.justice.gov.uk"
   SUICIDE_RISK_UI_URL_FORMAT        = "https://suicide-risk-form.hmpps.service.justice.gov.uk/suicide-risk/%s"
   TZ                                = "Europe/London"
-  USERMANAGEMENT_URL                = "https://delius-user-management-prod.hmpps.service.justice.gov.uk/umt/" # Not Deployed
+  USERMANAGEMENT_URL                = "https://delius-user-management.hmpps.service.justice.gov.uk/umt/"
   USER_CONTEXT                      = "ou=Users,dc=moj,dc=com"
   USER_MEM_ARGS                     = "-XX:MaxRAMPercentage=90.0"
 }
