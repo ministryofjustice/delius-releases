@@ -15,6 +15,7 @@ on:
           - test
           - stage
           - preprod
+          - prod
 
       maintenance_mode:
         description: "Enable/Disable Maintenance Banner"
