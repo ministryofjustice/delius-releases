@@ -116,19 +116,14 @@ jobs:
         id: set_image_tag_vars
         run: |
           WEBLOGIC_IMAGE_TAG="${{ inputs.version }}"
+          WEBLOGIC_EIS_IMAGE_TAG="${{ inputs.version }}-eis"
           if [[ -z "$WEBLOGIC_IMAGE_TAG" ]]; then
             WEBLOGIC_IMAGE_TAG="${{ steps.get_current_version.outputs.current_weblogic_version }}"
+            WEBLOGIC_EIS_IMAGE_TAG="${{ steps.get_current_version.outputs.current_weblogic_version }}-eis"
             echo "No Weblogic image tag supplied; using deployed version: $WEBLOGIC_IMAGE_TAG"
+            echo "No Weblogic-EIS image tag supplied; using deployed version: $WEBLOGIC_EIS_IMAGE_TAG"
           else
             echo "Using supplied Weblogic image tag: $WEBLOGIC_IMAGE_TAG"
-          fi
-
-          WEBLOGIC_EIS_IMAGE_TAG="${{ inputs.version }}-eis"
-          if [[ -z "$WEBLOGIC_EIS_IMAGE_TAG" ]]; then
-            WEBLOGIC_EIS_IMAGE_TAG="${{ steps.get_current_version.outputs.current_weblogic-eis_version }}"
-            echo "No Weblogic EIS image tag supplied; using deployed version: $WEBLOGIC_EIS_IMAGE_TAG"
-          else
-            echo "Using supplied Weblogic EIS image tag: $WEBLOGIC_EIS_IMAGE_TAG"
           fi
 
           {
@@ -140,7 +135,7 @@ jobs:
         id: check_image_version
         env:
           WEBLOGIC_IMAGE_TAG: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
-          WEBLOGIC_EIS_IMAGE_TAG: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
+          WEBLOGIC_EIS_IMAGE_TAG: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_EIS_IMAGE_TAG }}
         run: |
           echo "Checking if WebLogic version: $WEBLOGIC_IMAGE_TAG exists in ECR..."
           if ! ERROR=$(aws ecr describe-images --registry-id "374269020027" --repository-name "delius-core-weblogic" --image-ids imageTag=$WEBLOGIC_IMAGE_TAG 2>&1 >/dev/null); then
