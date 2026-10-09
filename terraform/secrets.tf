@@ -34,3 +34,10 @@ resource "aws_ssm_parameter" "secure" {
     ignore_changes = [value]
   }
 }
+
+resource "aws_ssm_parameter" "task_count" {
+  for_each = var.services
+  name     = "/${local.env_name}/${each.key}/task_count"
+  type     = "String"
+  value    = each.value.task_count
+}
