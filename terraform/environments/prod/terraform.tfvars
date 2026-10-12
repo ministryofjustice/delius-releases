@@ -7,19 +7,21 @@ is_production          = true
 
 services = {
   weblogic = {
-    container_port       = 8080
-    container_memory     = 8192
-    container_cpu        = 1024
-    task_count           = 30
-    grace_period_seconds = 480
+    container_port                     = 8080
+    container_memory                   = 8192
+    container_cpu                      = 1024
+    task_count                         = 30
+    grace_period_seconds               = 480
+    deployment_minimum_healthy_percent = 50
   }
 
   weblogic-eis = {
-    container_port       = 8080
-    container_memory     = 8192
-    container_cpu        = 1024
-    task_count           = 2
-    grace_period_seconds = 600
+    container_port                     = 8080
+    container_memory                   = 8192
+    container_cpu                      = 1024
+    task_count                         = 2
+    grace_period_seconds               = 600
+    deployment_minimum_healthy_percent = 50
   }
 }
 
@@ -30,7 +32,7 @@ weblogic_params = {
   BREACH_NOTICE_UI_URL_FORMAT       = "https://breach-notice.hmpps.service.justice.gov.uk/breach-notice/%s"
   COOKIE_SECURE                     = "true"
   COSSO_API_URL                     = "https://cosso-api-prod.hmpps.service.justice.gov.uk/cosso"
-  COSSO_UI_URL_FORMAT               = "https://cosso-ui-prod.hmpps.service.justice.gov.uk/cosso/%s" 
+  COSSO_UI_URL_FORMAT               = "https://cosso-ui-prod.hmpps.service.justice.gov.uk/cosso/%s"
   DEEPLINK_BASE_URL                 = "https://ndelius.probation.service.justice.gov.uk/NDelius-war/delius/JSP/deeplink.xhtml"
   DMS_HOST                          = "hmpps-delius-alfresco-prod.apps.live.cloud-platform.service.justice.gov.uk"
   DMS_OFFICE_URI_HOST               = "hmpps-delius-alfresco-prod.apps.live.cloud-platform.service.justice.gov.uk"
