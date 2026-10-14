@@ -2,7 +2,7 @@ name: Scheduled Production Deployment
 
 on:
   schedule:
-    - cron: '45 16 * * 4'
+    - cron: '15 17 * * 3'
       timezone: 'Europe/London'
 
 jobs:
