@@ -10,7 +10,7 @@ services = {
     container_port                     = 8080
     container_memory                   = 8192
     container_cpu                      = 1024
-    task_count                         = 30
+    task_count                         = 40
     grace_period_seconds               = 480
     deployment_minimum_healthy_percent = 50
   }
@@ -72,5 +72,5 @@ weblogic_params = {
   TZ                                = "Europe/London"
   USERMANAGEMENT_URL                = "https://delius-user-management.hmpps.service.justice.gov.uk/umt/"
   USER_CONTEXT                      = "ou=Users,dc=moj,dc=com"
-  USER_MEM_ARGS                     = "-XX:MaxRAMPercentage=90.0"
+  USER_MEM_ARGS                     = "-XX:MaxRAMPercentage=75.0"
 }
