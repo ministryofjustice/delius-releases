@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    uses: ./.github/workflows/deploy-mod-platform-new.yml
+    uses: ./.github/workflows/deploy-mp-new.yml
     with:
       environment: dev
       terraform_apply_only: true
