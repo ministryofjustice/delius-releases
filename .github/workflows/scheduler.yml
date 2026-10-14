@@ -2,13 +2,13 @@ name: Scheduled Production Deployment
 
 on:
   schedule:
-    - cron: '15 17 * * 3'
+    - cron: '30 01 * * 4'
       timezone: 'Europe/London'
 
 jobs:
   deploy:
     uses: ./.github/workflows/deploy-mp-new.yml
     with:
-      environment: dev
+      environment: prod
       terraform_apply_only: true
       version: "6.9.10"
