@@ -1,0 +1,14 @@
+name: Scheduled Production Deployment
+
+on:
+  schedule:
+    - cron: '45 16 * * 4'
+      timezone: 'Europe/London'
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy-mod-platform-new.yml
+    with:
+      environment: dev
+      terraform_apply_only: true
+      version: "6.9.10"
