@@ -65,5 +65,5 @@ weblogic_params = {
   TZ                                = "Europe/London"
   USERMANAGEMENT_URL                = "https://delius-user-management-dev.hmpps.service.justice.gov.uk/umt/"
   USER_CONTEXT                      = "ou=Users,dc=moj,dc=com"
-  USER_MEM_ARGS                     = "-XX:MaxRAMPercentage=90.0"
+  USER_MEM_ARGS                     = "-XX:MaxRAMPercentage=75.0"
 }
