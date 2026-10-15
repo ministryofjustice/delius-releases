@@ -8,9 +8,9 @@ is_production          = true
 services = {
   weblogic = {
     container_port                     = 8080
-    container_memory                   = 8192
-    container_cpu                      = 1024
-    task_count                         = 40
+    container_memory                   = 19456
+    container_cpu                      = 2048
+    task_count                         = 18
     grace_period_seconds               = 480
     deployment_minimum_healthy_percent = 50
   }
