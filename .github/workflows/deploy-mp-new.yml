@@ -157,6 +157,26 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
 
+      - name: Stop Delius Core Slack alerts
+        env:
+          account_name: ${{ steps.set_env_names.outputs.account_name }}
+        run: |
+          set -euo pipefail
+          PARAMETER_NAME="/${{ env.account_name }}/nightly_muted_alarm_names"
+          ALARM_NAMES_JSON=$(aws ssm get-parameter --name "$PARAMETER_NAME" --query 'Parameter.Value' --output text)
+          echo "$ALARM_NAMES_JSON" | jq -e 'type == "array"' > /dev/null
+          echo "ALARM_NAMES_JSON=$ALARM_NAMES_JSON" >> "$GITHUB_ENV"
+
+          alarms=()
+          while IFS= read -r alarm; do
+            alarms+=("$alarm")
+          done < <(echo "$ALARM_NAMES_JSON" | jq -r '.[]')
+
+          if (("${#alarms[@]}" > 0)); then
+            aws cloudwatch disable-alarm-actions \
+              --alarm-names "${alarms[@]}"
+          fi
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
@@ -317,6 +337,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
         run: gh workflow run readonly.yml --repo 'ministryofjustice/hmpps-probation-integration-services' --field 'action=disable' --field "environment=${{ inputs.environment}}"
+
+      - name: Restart Delius Core Slack alerts
+        if: always()
+        run: |
+          set -euo pipefail
+          echo "$ALARM_NAMES_JSON" | jq -e 'type == "array"' > /dev/null
+          alarms=()
+          
+          while IFS= read -r alarm; do
+            alarms+=("$alarm")
+          done < <(echo "$ALARM_NAMES_JSON" | jq -r '.[]')
+
+          if (("${#alarms[@]}" > 0)); then
+            aws cloudwatch enable-alarm-actions \
+              --alarm-names "${alarms[@]}"
+          fi
 
       - name: Revert version on failure
         if: always() && steps.config.outputs.version_changed == 'true' && (steps.terraform_plan.outcome == 'failure' || steps.terraform_apply.outcome == 'failure' || steps.restart_weblogic.outcome == 'failure' || steps.uplift_rbac.outcome == 'failure')
