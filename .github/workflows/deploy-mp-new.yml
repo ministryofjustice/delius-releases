@@ -162,6 +162,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
         run: |
           gh workflow run slack-alerts.yml --ref "${GITHUB_REF_NAME}" -f environment="${{ inputs.environment }}" -f 'action=disable'
+          sleep 5
+          RUN_ID=$(gh run list --workflow slack-alerts.yml --branch "${GITHUB_REF_NAME}" --limit 1 --json databaseId,status --jq '.[0].databaseId')
+          echo "Waiting for Slack alerts workflow run $RUN_ID to complete..."
+          gh run watch "$RUN_ID" --exit-status
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
@@ -338,6 +342,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
         run: |
           gh workflow run slack-alerts.yml --ref "${GITHUB_REF_NAME}" -f environment="${{ inputs.environment }}" -f 'action=enable'
+          RUN_ID=$(gh run list --workflow slack-alerts.yml --branch "${GITHUB_REF_NAME}" --limit 1 --json databaseId,status --jq '.[0].databaseId')
+          echo "Waiting for Slack alerts workflow run $RUN_ID to complete..."
+          gh run watch "$RUN_ID" --exit-status
 
       - name: Revert version on failure
         if: always() && steps.config.outputs.version_changed == 'true' && (steps.terraform_plan.outcome == 'failure' || steps.terraform_apply.outcome == 'failure' || steps.restart_weblogic.outcome == 'failure' || steps.uplift_rbac.outcome == 'failure')
