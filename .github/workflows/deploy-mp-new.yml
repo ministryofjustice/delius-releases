@@ -157,6 +157,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
 
+      - name: Stop Delius Core Slack alerts
+        env:
+          GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+        run: |
+          gh workflow run slack-alerts.yml --ref "${GITHUB_REF_NAME}" -f environment="${{ inputs.environment }}" -f 'action=disable'
+          sleep 5
+          RUN_ID=$(gh run list --workflow slack-alerts.yml --branch "${GITHUB_REF_NAME}" --limit 1 --json databaseId,status --jq '.[0].databaseId')
+          echo "Waiting for Slack alerts workflow run $RUN_ID to complete..."
+          gh run watch "$RUN_ID" --exit-status
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
@@ -214,7 +224,7 @@ jobs:
 
       - name: Uplift RBAC in modernisation platform
         id: uplift_rbac
-        if: ${{ steps.set_env_names.outputs.account_name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ inputs.terraform_apply_only == false }}
         env:
           modernisation_platform_environment: ${{ steps.set_env_names.outputs.account_name }}
           rbac_tag: ${{ inputs.rbac_version }}
@@ -224,7 +234,7 @@ jobs:
 
       - name: Restart UMT
         id: restart_umt
-        if: ${{ steps.set_env_names.outputs.account_name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ inputs.terraform_apply_only == false }}
         env:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
         shell: bash
@@ -232,7 +242,7 @@ jobs:
 
       - name: Uplift PDM in modernisation platform
         id: uplift_pdm
-        if: ${{ steps.set_env_names.outputs.account_name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ inputs.terraform_apply_only == false }}
         env:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
         shell: bash
@@ -243,7 +253,7 @@ jobs:
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
 
       - name: Wait for DB Uplift automation to complete
-        if: ${{ steps.set_env_names.outputs.account_name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ inputs.terraform_apply_only == false }}
         env:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
           uplift_run_id: ${{ steps.uplift_pdm.outputs.run_id }}
@@ -268,7 +278,7 @@ jobs:
 
       - name: Restart weblogic after database uplift to re-establish connection
         id: restart_weblogic
-        if: ${{ steps.set_env_names.outputs.account_name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ inputs.terraform_apply_only == false }}
         env:
           environment: ${{ steps.set_env_names.outputs.account_name }}
         run: | 
@@ -292,16 +302,24 @@ jobs:
             --service "$weblogic_eis_service_name" \
             --force-new-deployment
 
+      - name: Wait for Weblogic ECS services to stabilise
+        id: wait_weblogic
+        if: ${{ steps.terraform_plan.outputs.exitcode == '2' }}
+        run: |
+          cluster_name="delius-core-${{ inputs.environment }}-cluster"
+          weblogic_service_name="${{ inputs.environment }}-weblogic"
+          weblogic_eis_service_name="${{ inputs.environment }}-weblogic-eis"
+
           MAX_RETRIES=2
           COUNT=1
 
-          while [ $COUNT -le $MAX_RETRIES ]; do
-            echo "Waiting for Weblogic ECS service to stabilize: Attempt ($COUNT/$MAX_RETRIES)"
+          while [ "$COUNT" -le "$MAX_RETRIES" ]; do
+            echo "Waiting for Weblogic ECS services to stabilise: Attempt ($COUNT/$MAX_RETRIES)"
 
             if aws ecs wait services-stable \
               --cluster "$cluster_name" \
               --services "$weblogic_service_name" "$weblogic_eis_service_name"; then
-              echo "ECS service has been successfully restarted"
+              echo "ECS services have successfully stabilised"
               exit 0
             fi
 
@@ -309,7 +327,7 @@ jobs:
             COUNT=$((COUNT + 1))
           done
 
-          echo "ECS service not stable"
+          echo "ECS services not stable"
           exit 1
 
       - name: Re-enable Probation Integration updates
@@ -317,6 +335,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
         run: gh workflow run readonly.yml --repo 'ministryofjustice/hmpps-probation-integration-services' --field 'action=disable' --field "environment=${{ inputs.environment}}"
+
+      - name: Restart Delius Core Slack alerts
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+        run: |
+          gh workflow run slack-alerts.yml --ref "${GITHUB_REF_NAME}" -f environment="${{ inputs.environment }}" -f 'action=enable'
+          RUN_ID=$(gh run list --workflow slack-alerts.yml --branch "${GITHUB_REF_NAME}" --limit 1 --json databaseId,status --jq '.[0].databaseId')
+          echo "Waiting for Slack alerts workflow run $RUN_ID to complete..."
+          gh run watch "$RUN_ID" --exit-status
 
       - name: Revert version on failure
         if: always() && steps.config.outputs.version_changed == 'true' && (steps.terraform_plan.outcome == 'failure' || steps.terraform_apply.outcome == 'failure' || steps.restart_weblogic.outcome == 'failure' || steps.uplift_rbac.outcome == 'failure')
