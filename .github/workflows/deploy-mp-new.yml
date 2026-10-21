@@ -83,6 +83,15 @@ jobs:
             echo "Token is missing or empty"
             exit 1
           fi
+
+          if curl -fsS -H "Authorization: Bearer $token" -H "Accept: application/vnd.github+json" https://api.github.com/user -o /dev/null; then
+            echo "GitHub accepted the token"
+          else
+            echo "GitHub rejected the token or the API request failed"
+            exit 1
+          fi
+
+          curl -sS -o /dev/null -w "HTTP status: %{http_code}\n" -H "Authorization: Bearer $token" -H "Accept: application/vnd.github+json" https://api.github.com/repos/ministryofjustice/hmpps-env-configs
       # - name: Map environment name to Modernisation Platform account name and hmpps-env-configs name
       #   id: set_env_names
       #   run: |
