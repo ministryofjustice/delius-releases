@@ -220,15 +220,15 @@ jobs:
           echo 'terraform apply -var-file="environments/${{ inputs.environment }}/terraform.tfvars" -var="weblogic_image_tag=${{ env.WEBLOGIC_IMAGE_TAG }}" -var="weblogic_eis_image_tag=${{ env.WEBLOGIC_EIS_IMAGE_TAG }}" $tfargs'
           terraform apply -var-file="environments/${{ inputs.environment }}/terraform.tfvars" -var="weblogic_image_tag=${{ env.WEBLOGIC_IMAGE_TAG }}" -var="weblogic_eis_image_tag=${{ env.WEBLOGIC_EIS_IMAGE_TAG }}" $tfargs
 
-      - name: Update configuration
-        id: config
-        shell: bash
-        run: ./.github/workflows/update-env-config.sh
-        env:
-          environment: ${{ steps.set_env_names.outputs.hmpps_env_name }}
-          rbac_version: ${{ inputs.rbac_version }}
-          version: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
-          token: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+      # - name: Update configuration
+      #   id: config
+      #   shell: bash
+      #   run: ./.github/workflows/update-env-config.sh
+      #   env:
+      #     environment: ${{ steps.set_env_names.outputs.hmpps_env_name }}
+      #     rbac_version: ${{ inputs.rbac_version }}
+      #     version: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
+      #     token: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
 
       - name: Uplift RBAC in modernisation platform
         id: uplift_rbac
@@ -360,17 +360,17 @@ jobs:
               --alarm-names "${alarms[@]}"
           fi
 
-      - name: Revert version on failure
-        if: always() && steps.config.outputs.version_changed == 'true' && (steps.terraform_plan.outcome == 'failure' || steps.terraform_apply.outcome == 'failure' || steps.restart_weblogic.outcome == 'failure' || steps.uplift_rbac.outcome == 'failure')
-        working-directory: env_configs
-        shell: bash
-        env:
-          environment: ${{ steps.set_env_names.outputs.hmpps_env_name }}
-          current_version: ${{ steps.get_current_version.outputs.current_weblogic_version }}
-          version: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
-        run: |
-          sed -i "s/^ndelius_version:.*/ndelius_version: "'"'"$current_version"'"'"/" "$environment/ansible/group_vars/all.yml"
-          git commit -m "Rollback Delius v$version in $environment" \
-                     -m 'This was triggered by an automated deployment from https://github.com/ministryofjustice/delius-releases' \
-                     "$environment/ansible/group_vars/all.yml"
-          git push
+      # - name: Revert version on failure
+      #   if: always() && steps.config.outputs.version_changed == 'true' && (steps.terraform_plan.outcome == 'failure' || steps.terraform_apply.outcome == 'failure' || steps.restart_weblogic.outcome == 'failure' || steps.uplift_rbac.outcome == 'failure')
+      #   working-directory: env_configs
+      #   shell: bash
+      #   env:
+      #     environment: ${{ steps.set_env_names.outputs.hmpps_env_name }}
+      #     current_version: ${{ steps.get_current_version.outputs.current_weblogic_version }}
+      #     version: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
+      #   run: |
+      #     sed -i "s/^ndelius_version:.*/ndelius_version: "'"'"$current_version"'"'"/" "$environment/ansible/group_vars/all.yml"
+      #     git commit -m "Rollback Delius v$version in $environment" \
+      #                -m 'This was triggered by an automated deployment from https://github.com/ministryofjustice/delius-releases' \
+      #                "$environment/ansible/group_vars/all.yml"
+      #     git push
