@@ -158,11 +158,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
 
       - name: Stop Delius Core Slack alerts
-        env:
-          account_name: ${{ steps.set_env_names.outputs.account_name }}
         run: |
           set -euo pipefail
-          PARAMETER_NAME="/${{ env.account_name }}/nightly_muted_alarm_names"
+          PARAMETER_NAME="/delius-core-${{ inputs.environment }}/nightly_muted_alarm_names"
           ALARM_NAMES_JSON=$(aws ssm get-parameter --name "$PARAMETER_NAME" --query 'Parameter.Value' --output text)
           echo "$ALARM_NAMES_JSON" | jq -e 'type == "array"' > /dev/null
           echo "ALARM_NAMES_JSON=$ALARM_NAMES_JSON" >> "$GITHUB_ENV"
@@ -344,7 +342,7 @@ jobs:
           set -euo pipefail
           echo "$ALARM_NAMES_JSON" | jq -e 'type == "array"' > /dev/null
           alarms=()
-          
+
           while IFS= read -r alarm; do
             alarms+=("$alarm")
           done < <(echo "$ALARM_NAMES_JSON" | jq -r '.[]')
