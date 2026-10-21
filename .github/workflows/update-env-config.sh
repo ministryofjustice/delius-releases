@@ -31,6 +31,11 @@ function update_versions() {
 
 # clone the configuration repo
 git_config
+
+export GIT_CONFIG_COUNT=1
+export GIT_CONFIG_KEY_0=credential.helper
+export GIT_CONFIG_VALUE_0='!f() { echo "username=x-access-token"; echo "password=$token"; }; f'
+
 git clone "https://$token@github.com/ministryofjustice/hmpps-env-configs.git" env_configs
 cd env_configs
 
