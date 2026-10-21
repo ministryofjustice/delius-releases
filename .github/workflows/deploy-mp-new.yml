@@ -232,7 +232,7 @@ jobs:
 
       - name: Uplift RBAC in modernisation platform
         id: uplift_rbac
-        if: ${{ steps.set_env_names.outputs.account_name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ inputs.terraform_apply_only == false }}
         env:
           modernisation_platform_environment: ${{ steps.set_env_names.outputs.account_name }}
           rbac_tag: ${{ inputs.rbac_version }}
@@ -242,7 +242,7 @@ jobs:
 
       - name: Restart UMT
         id: restart_umt
-        if: ${{ steps.set_env_names.outputs.account_name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ inputs.terraform_apply_only == false }}
         env:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
         shell: bash
@@ -250,7 +250,7 @@ jobs:
 
       - name: Uplift PDM in modernisation platform
         id: uplift_pdm
-        if: ${{ steps.set_env_names.outputs.account_name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ inputs.terraform_apply_only == false }}
         env:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
         shell: bash
@@ -261,7 +261,7 @@ jobs:
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
 
       - name: Wait for DB Uplift automation to complete
-        if: ${{ steps.set_env_names.outputs.account_name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ inputs.terraform_apply_only == false }}
         env:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
           uplift_run_id: ${{ steps.uplift_pdm.outputs.run_id }}
@@ -286,7 +286,7 @@ jobs:
 
       - name: Restart weblogic after database uplift to re-establish connection
         id: restart_weblogic
-        if: ${{ steps.set_env_names.outputs.account_name != '' && inputs.terraform_apply_only == false }}
+        if: ${{ inputs.terraform_apply_only == false }}
         env:
           environment: ${{ steps.set_env_names.outputs.account_name }}
         run: | 
@@ -310,16 +310,24 @@ jobs:
             --service "$weblogic_eis_service_name" \
             --force-new-deployment
 
+      - name: Wait for Weblogic ECS services to stabilise
+        id: wait_weblogic
+        if: ${{ steps.terraform_plan.outputs.exitcode == '2' }}
+        run: |
+          cluster_name="delius-core-${{ inputs.environment }}-cluster"
+          weblogic_service_name="${{ inputs.environment }}-weblogic"
+          weblogic_eis_service_name="${{ inputs.environment }}-weblogic-eis"
+
           MAX_RETRIES=2
           COUNT=1
 
-          while [ $COUNT -le $MAX_RETRIES ]; do
-            echo "Waiting for Weblogic ECS service to stabilize: Attempt ($COUNT/$MAX_RETRIES)"
+          while [ "$COUNT" -le "$MAX_RETRIES" ]; do
+            echo "Waiting for Weblogic ECS services to stabilise: Attempt ($COUNT/$MAX_RETRIES)"
 
             if aws ecs wait services-stable \
               --cluster "$cluster_name" \
               --services "$weblogic_service_name" "$weblogic_eis_service_name"; then
-              echo "ECS service has been successfully restarted"
+              echo "ECS services have successfully stabilised"
               exit 0
             fi
 
@@ -327,7 +335,7 @@ jobs:
             COUNT=$((COUNT + 1))
           done
 
-          echo "ECS service not stable"
+          echo "ECS services not stable"
           exit 1
 
       - name: Re-enable Probation Integration updates
