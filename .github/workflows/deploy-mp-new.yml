@@ -92,66 +92,67 @@ jobs:
           fi
 
           curl -sS -o /dev/null -w "HTTP status: %{http_code}\n" -H "Authorization: Bearer $token" -H "Accept: application/vnd.github+json" https://api.github.com/repos/ministryofjustice/hmpps-env-configs
-      # - name: Map environment name to Modernisation Platform account name and hmpps-env-configs name
-      #   id: set_env_names
-      #   run: |
-      #     if [ "$environment" == 'dev' ];      then account_name='delius-core-development'; hmpps_env_name='delius-mis-dev'; fi
-      #     if [ "$environment" == 'test' ];     then account_name='delius-core-test'; hmpps_env_name='delius-test'; fi
-      #     if [ "$environment" == 'stage' ];    then account_name='delius-core-stage'; hmpps_env_name='delius-stage'; fi
-      #     if [ "$environment" == 'preprod' ];  then account_name='delius-core-preproduction'; hmpps_env_name='delius-pre-prod'; fi
-      #     if [ "$environment" == 'prod' ];     then account_name='delius-core-production'; hmpps_env_name='delius-prod'; fi
-      #     echo "account_name=${account_name}"
-      #     echo "hmpps_env_name=${hmpps_env_name}"
-      #     echo "account_name=${account_name}" >> "$GITHUB_OUTPUT"
-      #     echo "hmpps_env_name=${hmpps_env_name}" >> "$GITHUB_OUTPUT"
-      #   env:
-      #     environment: ${{ inputs.environment }}
 
-      # # Necessary for applying Terraform if no 'Version' input is supplied
-      # - name: Get currently running version of Weblogic/EIS
-      #   id: get_current_version
-      #   if: ${{ inputs.version == '' }}
-      #   run: |
-      #     for SERVICE in weblogic weblogic-eis; do
-      #       TASK_DEFINITION=$(aws ecs describe-services \
-      #         --cluster "delius-core-${{ inputs.environment }}-cluster" \
-      #         --services "${{ inputs.environment }}-$SERVICE" \
-      #         --query 'services[0].taskDefinition' \
-      #         --output text)
+      - name: Map environment name to Modernisation Platform account name and hmpps-env-configs name
+        id: set_env_names
+        run: |
+          if [ "$environment" == 'dev' ];      then account_name='delius-core-development'; hmpps_env_name='delius-mis-dev'; fi
+          if [ "$environment" == 'test' ];     then account_name='delius-core-test'; hmpps_env_name='delius-test'; fi
+          if [ "$environment" == 'stage' ];    then account_name='delius-core-stage'; hmpps_env_name='delius-stage'; fi
+          if [ "$environment" == 'preprod' ];  then account_name='delius-core-preproduction'; hmpps_env_name='delius-pre-prod'; fi
+          if [ "$environment" == 'prod' ];     then account_name='delius-core-production'; hmpps_env_name='delius-prod'; fi
+          echo "account_name=${account_name}"
+          echo "hmpps_env_name=${hmpps_env_name}"
+          echo "account_name=${account_name}" >> "$GITHUB_OUTPUT"
+          echo "hmpps_env_name=${hmpps_env_name}" >> "$GITHUB_OUTPUT"
+        env:
+          environment: ${{ inputs.environment }}
 
-      #       if [[ -z "$TASK_DEFINITION" || "$TASK_DEFINITION" == "None" ]]; then
-      #         echo "Service '${{ inputs.environment }}-$SERVICE' is not deployed and no 'Version' input was provided."
-      #         echo "Please provide a 'Version' input to deploy the service for the first time."
-      #         exit 1
-      #       fi
+      # Necessary for applying Terraform if no 'Version' input is supplied
+      - name: Get currently running version of Weblogic/EIS
+        id: get_current_version
+        if: ${{ inputs.version == '' }}
+        run: |
+          for SERVICE in weblogic weblogic-eis; do
+            TASK_DEFINITION=$(aws ecs describe-services \
+              --cluster "delius-core-${{ inputs.environment }}-cluster" \
+              --services "${{ inputs.environment }}-$SERVICE" \
+              --query 'services[0].taskDefinition' \
+              --output text)
 
-      #       IMAGE=$(aws ecs describe-task-definition \
-      #         --task-definition "$TASK_DEFINITION" \
-      #         --query 'taskDefinition.containerDefinitions[0].image' \
-      #         --output text)
+            if [[ -z "$TASK_DEFINITION" || "$TASK_DEFINITION" == "None" ]]; then
+              echo "Service '${{ inputs.environment }}-$SERVICE' is not deployed and no 'Version' input was provided."
+              echo "Please provide a 'Version' input to deploy the service for the first time."
+              exit 1
+            fi
 
-      #       echo "Current ${SERVICE} version = ${IMAGE##*:}"
-      #       echo "current_${SERVICE}_version=${IMAGE##*:}" >> "$GITHUB_OUTPUT"
-      #     done
+            IMAGE=$(aws ecs describe-task-definition \
+              --task-definition "$TASK_DEFINITION" \
+              --query 'taskDefinition.containerDefinitions[0].image' \
+              --output text)
 
-      # - name: Set Image tag Terraform variables
-      #   id: set_image_tag_vars
-      #   run: |
-      #     WEBLOGIC_IMAGE_TAG="${{ inputs.version }}"
-      #     WEBLOGIC_EIS_IMAGE_TAG="${{ inputs.version }}-eis"
-      #     if [[ -z "$WEBLOGIC_IMAGE_TAG" ]]; then
-      #       WEBLOGIC_IMAGE_TAG="${{ steps.get_current_version.outputs.current_weblogic_version }}"
-      #       WEBLOGIC_EIS_IMAGE_TAG="${{ steps.get_current_version.outputs.current_weblogic_version }}-eis"
-      #       echo "No Weblogic image tag supplied; using deployed version: $WEBLOGIC_IMAGE_TAG"
-      #       echo "No Weblogic-EIS image tag supplied; using deployed version: $WEBLOGIC_EIS_IMAGE_TAG"
-      #     else
-      #       echo "Using supplied Weblogic image tag: $WEBLOGIC_IMAGE_TAG"
-      #     fi
+            echo "Current ${SERVICE} version = ${IMAGE##*:}"
+            echo "current_${SERVICE}_version=${IMAGE##*:}" >> "$GITHUB_OUTPUT"
+          done
 
-      #     {
-      #       echo "WEBLOGIC_IMAGE_TAG=$WEBLOGIC_IMAGE_TAG"
-      #       echo "WEBLOGIC_EIS_IMAGE_TAG=$WEBLOGIC_EIS_IMAGE_TAG"
-      #     } >> "$GITHUB_OUTPUT"
+      - name: Set Image tag Terraform variables
+        id: set_image_tag_vars
+        run: |
+          WEBLOGIC_IMAGE_TAG="${{ inputs.version }}"
+          WEBLOGIC_EIS_IMAGE_TAG="${{ inputs.version }}-eis"
+          if [[ -z "$WEBLOGIC_IMAGE_TAG" ]]; then
+            WEBLOGIC_IMAGE_TAG="${{ steps.get_current_version.outputs.current_weblogic_version }}"
+            WEBLOGIC_EIS_IMAGE_TAG="${{ steps.get_current_version.outputs.current_weblogic_version }}-eis"
+            echo "No Weblogic image tag supplied; using deployed version: $WEBLOGIC_IMAGE_TAG"
+            echo "No Weblogic-EIS image tag supplied; using deployed version: $WEBLOGIC_EIS_IMAGE_TAG"
+          else
+            echo "Using supplied Weblogic image tag: $WEBLOGIC_IMAGE_TAG"
+          fi
+
+          {
+            echo "WEBLOGIC_IMAGE_TAG=$WEBLOGIC_IMAGE_TAG"
+            echo "WEBLOGIC_EIS_IMAGE_TAG=$WEBLOGIC_EIS_IMAGE_TAG"
+          } >> "$GITHUB_OUTPUT"
 
       # - name: Check if image version is in ECR
       #   id: check_image_version
@@ -224,15 +225,15 @@ jobs:
       #     echo 'terraform apply -var-file="environments/${{ inputs.environment }}/terraform.tfvars" -var="weblogic_image_tag=${{ env.WEBLOGIC_IMAGE_TAG }}" -var="weblogic_eis_image_tag=${{ env.WEBLOGIC_EIS_IMAGE_TAG }}" $tfargs'
       #     terraform apply -var-file="environments/${{ inputs.environment }}/terraform.tfvars" -var="weblogic_image_tag=${{ env.WEBLOGIC_IMAGE_TAG }}" -var="weblogic_eis_image_tag=${{ env.WEBLOGIC_EIS_IMAGE_TAG }}" $tfargs
 
-      # - name: Update configuration
-      #   id: config
-      #   shell: bash
-      #   run: ./.github/workflows/update-env-config.sh
-      #   env:
-      #     environment: ${{ steps.set_env_names.outputs.hmpps_env_name }}
-      #     rbac_version: ${{ inputs.rbac_version }}
-      #     version: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
-      #     token: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+      - name: Update configuration
+        id: config
+        shell: bash
+        run: ./.github/workflows/update-env-config.sh
+        env:
+          environment: "delius-mis-dev"
+          rbac_version: ""
+          version: ${{ steps.set_image_tag_vars.outputs.WEBLOGIC_IMAGE_TAG }}
+          token: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
 
       # - name: Uplift RBAC in modernisation platform
       #   id: uplift_rbac
