@@ -64,16 +64,16 @@ jobs:
         run: |
           set -euo pipefail
 
-          echo "Finding CloudWatch alarms where the 'app' tag is one of:"
-          echo "  weblogic"
-          echo "  weblogic-eis"
-          echo "  weblogic-data"
+          echo "Finding CloudWatch alarms where the 'service' tag is one of:"
+          echo "  ${{ inputs.environment }}-weblogic"
+          echo "  ${{ inputs.environment }}-weblogic-eis"
+          echo "  ${{ inputs.environment }}-weblogic-data"
 
           ALARMS=$(
             aws resourcegroupstaggingapi get-resources \
               --resource-type-filters cloudwatch:alarm \
               --tag-filters \
-                'Key=app,Values=weblogic,weblogic-eis,weblogic-data' \
+                'Key=service,Values=${{ inputs.environment }}-weblogic,${{ inputs.environment }}-weblogic-eis,${{ inputs.environment }}-weblogic-data' \
               --query 'ResourceTagMappingList[].ResourceARN' \
               --output text |
             tr '\t' '\n' |
