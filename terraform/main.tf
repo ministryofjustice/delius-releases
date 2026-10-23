@@ -6,6 +6,42 @@ locals {
     },
     var.short_environment_name == "test" ? { weblogic-data = "5.8.12.6-testdata-api" } : {}
   )
+
+  weblogic_data_excluded_params = [
+    "API_CLIENT_ID",
+    "API_CLIENT_SECRET",
+    "APPLICATIONINSIGHTS_CONNECTION_STRING",
+    "BREACH_NOTICE_API_URL",
+    "BREACH_NOTICE_UI_URL_FORMAT",
+    "COSSO_API_URL",
+    "COSSO_UI_URL_FORMAT",
+    "DEEPLINK_BASE_URL",
+    "JDBC_CONNECTION_POOL_MAX_CAPACITY",
+    "JDBC_CONNECTION_POOL_MIN_CAPACITY",
+    "NOTIFICATION_API_KEY",
+    "OAUTH_CALLBACK_URL",
+    "OAUTH_CLIENT_ID",
+    "OAUTH_CLIENT_SECRET",
+    "OAUTH_DEFAULT_SCOPE",
+    "OAUTH_LOGIN_ENABLED",
+    "OAUTH_LOGIN_NAME",
+    "OAUTH_TOKEN_VERIFICATION_URL",
+    "OAUTH_URL",
+    "OFFENDER_SEARCH_API_URL",
+    "OS_DATAHUB_API_KEY",
+    "PREPARE_CASE_FOR_SENTENCE_URL",
+    "PSR_SERVICE_URL",
+    "PSR_UI_URL_FORMAT",
+    "SUICIDE_RISK_API_URL",
+    "SUICIDE_RISK_UI_URL_FORMAT",
+    "TRAINING_MODE_APP_NAME"
+  ]
+
+  weblogic_data_params = {
+    for k, v in var.weblogic_params :
+    k => v
+    if !contains(local.weblogic_data_excluded_params, k)
+  }
 }
 
 module "container_definition" {
@@ -21,13 +57,14 @@ module "container_definition" {
   container_user           = "root"
 
   environment = [
-    for k, v in var.weblogic_params : {
+    for k, v in ( each.key == "weblogic-data" ? local.weblogic_data_params : var.weblogic_params ) :
+    {
       name  = k
       value = v
     }
   ]
 
-  secrets = local.secrets_map
+  secrets = ( each.key == "weblogic-data" ? local.weblogic_data_secrets : local.secrets_map )
 
   port_mappings = [
     {
