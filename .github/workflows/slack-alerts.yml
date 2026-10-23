@@ -73,7 +73,7 @@ jobs:
             aws resourcegroupstaggingapi get-resources \
               --resource-type-filters cloudwatch:alarm \
               --tag-filters \
-                'Key=service,Values=${{ inputs.environment }}-weblogic,${{ inputs.environment }}-weblogic-eis,${{ inputs.environment }}-weblogic-data" \
+                'Key=service,Values=${{ inputs.environment }}-weblogic,${{ inputs.environment }}-weblogic-eis,${{ inputs.environment }}-weblogic-data' \
               --query 'ResourceTagMappingList[].ResourceARN' \
               --output text |
             tr '\t' '\n' |
