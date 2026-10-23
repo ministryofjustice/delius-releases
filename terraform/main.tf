@@ -57,14 +57,14 @@ module "container_definition" {
   container_user           = "root"
 
   environment = [
-    for k, v in ( each.key == "weblogic-data" ? local.weblogic_data_params : var.weblogic_params ) :
+    for k, v in(each.key == "weblogic-data" ? local.weblogic_data_params : var.weblogic_params) :
     {
       name  = k
       value = v
     }
   ]
 
-  secrets = ( each.key == "weblogic-data" ? local.weblogic_data_secrets : local.secrets_map )
+  secrets = (each.key == "weblogic-data" ? local.weblogic_data_secrets : local.secrets_map)
 
   port_mappings = [
     {
