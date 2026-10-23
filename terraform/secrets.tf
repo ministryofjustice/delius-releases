@@ -23,6 +23,19 @@ locals {
       valueFrom = parameter.arn
     }
   ]
+
+  weblogic_data_excluded_secrets = [
+    "API_CLIENT_SECRET",
+    "APPLICATIONINSIGHTS_CONNECTION_STRING",
+    "NOTIFICATION_API_KEY",
+    "OAUTH_CLIENT_SECRET",
+    "OS_DATAHUB_API_KEY"
+  ]
+
+  weblogic_data_secrets = [
+    for secret in local.secrets_map : secret
+    if !contains(local.weblogic_data_excluded_secrets, secret.name)
+  ]
 }
 
 resource "aws_ssm_parameter" "secure" {
