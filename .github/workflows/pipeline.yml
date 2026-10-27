@@ -62,7 +62,7 @@ jobs:
           tag_name: v${{ github.event.head_commit.message }}
 
   dev:
-    uses: ./.github/workflows/deploy-mp-new.yml
+    uses: ./.github/workflows/deploy.yml
     needs: release
     with:
       environment: dev
@@ -71,7 +71,7 @@ jobs:
     secrets: inherit
 
   test:
-    uses: ./.github/workflows/deploy-mp-new.yml
+    uses: ./.github/workflows/deploy.yml
     needs:
       - release
     with:
@@ -103,7 +103,7 @@ jobs:
           disable-source-override: true
 
   stage:
-    uses: ./.github/workflows/deploy-mp-new.yml
+    uses: ./.github/workflows/deploy.yml
     needs:
       - release
     with:
@@ -136,7 +136,7 @@ jobs:
           DURATION: 3600 # 1 hour
 
   pre-prod:
-    uses: ./.github/workflows/deploy-mp-new.yml
+    uses: ./.github/workflows/deploy.yml
     needs:
       - release
       - test
