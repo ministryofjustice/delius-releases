@@ -80,4 +80,6 @@ weblogic_params = {
   USERMANAGEMENT_URL                = "https://delius-user-management-test.hmpps.service.justice.gov.uk/umt/"
   USER_CONTEXT                      = "ou=Users,dc=moj,dc=com"
   USER_MEM_ARGS                     = "-XX:MaxRAMPercentage=75.0"
+  WARRANT_RISK_ASSESSMENT_API_URL   = "https://warrant-risk-assessment-api-dev.hmpps.service.justice.gov.uk"
+  WARRANT_RISK_ASSESSMENT_UI_URL_FORMAT = "https://warrant-risk-assessment-dev.hmpps.service.justice.gov.uk/warrant-risk-assessment/%s"
 }
