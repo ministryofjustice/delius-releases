@@ -40,6 +40,7 @@ weblogic_params = {
   EIS_USER_CONTEXT                  = "cn=EISUsers,ou=Users,dc=moj,dc=com"
   ELASTICSEARCH_URL                 = "https://probation-search-dev.hmpps.service.justice.gov.uk/delius"
   GDPR_URL                          = "https://ndelius.mis-dev.probation.service.justice.gov.uk/gdpr/ui/homepage"
+  JAVA_TOOL_OPTIONS                 = "-XX:-UseBASE64Intrinsics"
   JDBC_CONNECTION_POOL_MAX_CAPACITY = "100"
   JDBC_CONNECTION_POOL_MIN_CAPACITY = "50"
   JDBC_URL                          = "jdbc:oracle:thin:@(DESCRIPTION=(LOAD_BALANCE=OFF)(FAILOVER=ON)(CONNECT_TIMEOUT=10)(RETRY_COUNT=3)(ADDRESS_LIST=(ADDRESS=(PROTOCOL=tcp)(HOST=delius-core-dev-db-1.hmpps-development.modernisation-platform.internal)(PORT=1521))(ADDRESS=(PROTOCOL=tcp)(HOST=delius-core-dev-db-2.hmpps-development.modernisation-platform.internal)(PORT=1521))(ADDRESS=(PROTOCOL=tcp)(HOST=delius-core-dev-db-3.hmpps-development.modernisation-platform.internal)(PORT=1521)))(CONNECT_DATA=(SERVICE_NAME=DMDNDA_TAF)))"
