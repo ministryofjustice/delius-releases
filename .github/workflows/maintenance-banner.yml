@@ -31,9 +31,24 @@ on:
         type: string
         default: "Delius is down for maintenance"
 
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+
+      maintenance_mode:
+        required: true
+        type: string
+
+      banner_text:
+        required: false
+        type: string
+        default: "Delius is down for maintenance"
+
 jobs:
   manage-maintenance:
-    name: ${{ inputs.maintenance_mode == 'enable' && 'Enable' || 'Disable' }} maintenance mode
+    name: ${{ inputs.maintenance_mode == 'enable' && 'Enable' || 'Disable' }} maintenance mode (${{ inputs.environment }})
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     permissions:
@@ -52,14 +67,17 @@ jobs:
         env:
           LISTENER_ARN: ${{ vars.HTTPS_LISTENER_ARN }}
           BANNER_TEXT: ${{ inputs.banner_text }}
+          ENVIRONMENT: ${{ inputs.environment }}
         run: |
           set -euo pipefail
+
+          ENVIRONMENT="${ENVIRONMENT#preapproved-}"
 
           LISTENER_ARN=$(
             aws elbv2 describe-listeners \
               --load-balancer-arn "$(
                 aws elbv2 describe-load-balancers \
-                  --names 'delius-core-${{ inputs.environment }}-weblogic-alb' \
+                  --names "delius-core-${ENVIRONMENT}-weblogic-alb" \
                   --query 'LoadBalancers[0].LoadBalancerArn' \
                   --output text
               )" \
@@ -68,7 +86,7 @@ jobs:
           )
 
           if [[ "$LISTENER_ARN" == "None" || -z "$LISTENER_ARN" ]]; then
-            echo "::error::HTTPS_LISTENER_ARN is not configured for environment 'delius-core-${{ inputs.environment }}-weblogic-alb'"
+            echo "::error::HTTPS_LISTENER_ARN is not configured for environment \"delius-core-${ENVIRONMENT}-weblogic-alb\""
             exit 1
           fi
 
