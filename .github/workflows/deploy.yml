@@ -50,7 +50,7 @@ on:
       
 jobs:
   stop_alerts:
-    name: Stop Delius Core Slack alerts
+    name: Stop Delius Core Slack alerts (${{ inputs.environment }})
     uses: ./.github/workflows/slack-alerts.yml
     with: 
       environment: ${{ inputs.environment }}
@@ -60,7 +60,7 @@ jobs:
     name: Enable Maintenance Banner (${{ inputs.environment }})
     uses: ./.github/workflows/maintenance-banner.yml
     with:
-      environment: preapproved-${{ inputs.environment }}
+      environment: ${{ inputs.environment }}
       maintenance_mode: enable
       banner_text: "Delius is down for maintenance. Please try again in a few minutes."
 

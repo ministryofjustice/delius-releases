@@ -48,7 +48,7 @@ on:
 
 jobs:
   manage-maintenance:
-    name: ${{ inputs.maintenance_mode == 'enable' && 'Enable' || 'Disable' }} maintenance mode
+    name: ${{ inputs.maintenance_mode == 'enable' && 'Enable' || 'Disable' }} maintenance mode (${{ inputs.environment }})
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     permissions:
