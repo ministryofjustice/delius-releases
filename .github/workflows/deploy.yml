@@ -152,7 +152,7 @@ jobs:
       - name: Enable Maintenance Banner
         env:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
-        uses: delius-releases/.github/workflows/maintenance-banner.yml@main
+        uses: ./delius-releases/.github/workflows/maintenance-banner.yml@main
         with:
           environment: preapproved-${{ inputs.environment }}
           maintenance_mode: enable
@@ -167,7 +167,7 @@ jobs:
       - name: Stop Delius Core Slack alerts
         env:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
-        uses: delius-releases/.github/workflows/slack-alerts.yml@main
+        uses: ./delius-releases/.github/workflows/slack-alerts.yml@main
         with: 
           environment: ${{ inputs.environment }}
           action: disable
@@ -345,7 +345,7 @@ jobs:
         if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
-        uses: delius-releases/.github/workflows/slack-alerts.yml@main
+        uses: ./delius-releases/.github/workflows/slack-alerts.yml@main
         with: 
           environment: ${{ inputs.environment }}
           action: enable
@@ -354,7 +354,7 @@ jobs:
         if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
-        uses: delius-releases/.github/workflows/maintenance-banner.yml@main
+        uses: ./delius-releases/.github/workflows/maintenance-banner.yml@main
         with:
           environment: preapproved-${{ inputs.environment }}
           maintenance_mode: disable
