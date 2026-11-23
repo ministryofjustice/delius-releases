@@ -77,7 +77,7 @@ jobs:
             aws elbv2 describe-listeners \
               --load-balancer-arn "$(
                 aws elbv2 describe-load-balancers \
-                  --names 'delius-core-${ENVIRONMENT}-weblogic-alb' \
+                  --names "delius-core-${ENVIRONMENT}-weblogic-alb" \
                   --query 'LoadBalancers[0].LoadBalancerArn' \
                   --output text
               )" \
@@ -86,7 +86,7 @@ jobs:
           )
 
           if [[ "$LISTENER_ARN" == "None" || -z "$LISTENER_ARN" ]]; then
-            echo "::error::HTTPS_LISTENER_ARN is not configured for environment 'delius-core-${ENVIRONMENT}-weblogic-alb'"
+            echo "::error::HTTPS_LISTENER_ARN is not configured for environment \"delius-core-${ENVIRONMENT}-weblogic-alb\""
             exit 1
           fi
 
