@@ -358,6 +358,7 @@ jobs:
   start_alerts:
     name: Start Delius Core Slack alerts (${{ inputs.environment }})
     uses: ./.github/workflows/slack-alerts.yml
+    needs: deploy
     with: 
       environment: ${{ inputs.environment }}
       action: enable
@@ -365,6 +366,7 @@ jobs:
   disable_maintenance_banner:
     name: Disable Maintenance Banner (${{ inputs.environment }})
     uses: ./.github/workflows/maintenance-banner.yml
+    needs: deploy
     with:
       environment: preapproved-${{ inputs.environment }}
       maintenance_mode: disable
