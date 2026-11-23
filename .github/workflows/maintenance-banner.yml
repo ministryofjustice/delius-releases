@@ -31,6 +31,21 @@ on:
         type: string
         default: "Delius is down for maintenance"
 
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+
+      maintenance_mode:
+        required: true
+        type: string
+
+      banner_text:
+        required: false
+        type: string
+        default: "Delius is down for maintenance"
+
 jobs:
   manage-maintenance:
     name: ${{ inputs.maintenance_mode == 'enable' && 'Enable' || 'Disable' }} maintenance mode

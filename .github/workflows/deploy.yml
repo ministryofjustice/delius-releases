@@ -149,6 +149,16 @@ jobs:
             exit 1
           fi
 
+      - name: Enable Maintenance Banner
+        env:
+          GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+        run: |
+          gh workflow run maintenance-banner.yml -f "environment=${{ inputs.environment }}" -f "maintenance_mode=enable" -f "banner_text=Delius is down for maintenance. Please try again in a few minutes."
+          sleep 5
+          RUN_ID=$(gh run list --workflow maintenance-banner.yml --branch "${GITHUB_REF_NAME}" --limit 1 --json databaseId,status --jq '.[0].databaseId')
+          echo "Waiting for Maintenance Banner workflow run $RUN_ID to complete..."
+          gh run watch "$RUN_ID" --exit-status
+
       - name: Stop Probation Integration updates
         if: (inputs.environment == 'test' || inputs.environment == 'preprod' || inputs.environment == 'prod') && inputs.terraform_apply_only == false
         run: gh workflow run readonly.yml --repo 'ministryofjustice/hmpps-probation-integration-services' --field 'action=enable' --field "environment=${{ inputs.environment }}"
@@ -342,6 +352,17 @@ jobs:
           gh workflow run slack-alerts.yml --ref "${GITHUB_REF_NAME}" -f environment="${{ inputs.environment }}" -f 'action=enable'
           RUN_ID=$(gh run list --workflow slack-alerts.yml --branch "${GITHUB_REF_NAME}" --limit 1 --json databaseId,status --jq '.[0].databaseId')
           echo "Waiting for Slack alerts workflow run $RUN_ID to complete..."
+          gh run watch "$RUN_ID" --exit-status
+      
+      - name: Disable Maintenance Banner
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.UNILINK_BOT_GITHUB_TOKEN }}
+        run: |
+          gh workflow run maintenance-banner.yml -f "environment=${{ inputs.environment }}" -f "maintenance_mode=disable"
+          sleep 5
+          RUN_ID=$(gh run list --workflow maintenance-banner.yml --branch "${GITHUB_REF_NAME}" --limit 1 --json databaseId,status --jq '.[0].databaseId')
+          echo "Waiting for Maintenance Banner workflow run $RUN_ID to complete..."
           gh run watch "$RUN_ID" --exit-status
 
       - name: Revert version on failure
